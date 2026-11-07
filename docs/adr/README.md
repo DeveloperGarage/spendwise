@@ -10,3 +10,4 @@ Accepted for the private-beta baseline on 7 November 2026. Each record is the de
 | [0004](0004-expo-including-web.md) | The beta client is Expo, including the web build. Native iOS does not gate the trip. |
 | [0005](0005-server-is-the-only-writer.md) | The API commits money inside one transaction. Phase 1 does not save offline. |
 | [0006](0006-shared-domain-package.md) | Split, balance, and suggestion math live in one TypeScript package used by the client preview and the API. |
+| [0007](0007-frontend-stack.md) | The Expo client is built from NativeWind, TanStack Query, Zustand, and React Hook Form with Zod. |
