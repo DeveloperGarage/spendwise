@@ -4,7 +4,7 @@ Status: planning baseline. 7 November 2026.
 
 Phase 1 is a shared journal with one writer. Android and mobile Safari are two builds of the same Expo client. The money rules live in one TypeScript package that both the preview and the API call. PostgreSQL stores the journal. Balances are computed from it.
 
-The rules themselves are in [domain-model.md](domain-model.md). Why these choices were made is in [adr/README.md](adr/README.md). What the beta must do for the group is in [product-plan.md](product-plan.md).
+The rules themselves are in [domain-model.md](domain-model.md). The HTTP routes and bodies are in [api.md](api.md). Why these choices were made is in [adr/README.md](adr/README.md). What the beta must do for the group is in [product-plan.md](product-plan.md).
 
 ## Shape
 
@@ -57,6 +57,7 @@ All of these require a session except the magic-link request and the link redemp
 | --- | --- |
 | Request magic link | Sends one-time email. |
 | Redeem magic link | Creates a session. |
+| Dashboard | Caller name, net, owed, owe, and one balance per group. Computed. See [api.md](api.md). |
 | Create group | Caller becomes a member. Seeds the seven categories. |
 | Read or rotate invite link | Any member. The token is unguessable. |
 | Join with invite | Creates a membership. |
@@ -70,11 +71,11 @@ All of these require a session except the magic-link request and the link redemp
 | Balances and suggested transfers | Computed on read. |
 | Trip summary | Total, per-member share, per-category total. Voided rows excluded. Hidden list rows still included. |
 
-Rupee amounts cross the HTTP boundary as integer paise, or as decimal strings that the API parses with the domain parser before any arithmetic. JSON numbers with a fractional part are not a valid money input.
+The HTTP field is `amount`. It is the same integer the domain model calls paise: the minor unit of the group's currency. For INR, ₹1,200.00 is `120000`. The client parses a typed rupee string with the domain parser and posts that integer. A JSON number with a fractional part is not a valid money input. Field names and routes are in [api.md](api.md).
 
 ## Write path
 
-A money write is one transaction.
+A money write is one transaction. A create that repeats an `Idempotency-Key` returns the row from the first request and does not insert again.
 
 1. Load the group and confirm the caller is a member.
 2. For an edit, require the version the client read. A mismatch returns a conflict and writes nothing.
@@ -116,7 +117,7 @@ Sessions are opaque tokens stored on the server. The native app keeps the token 
 
 ## Read model
 
-Phase 1 does not store a balance column. Balances, the suggestion, and the trip summary are queries over live expenses, lines, and settlements. A group on a trip is small enough that this stays cheap. A stored balance may be added later as a cache, rebuilt from the same rows, never as a source the writes trust more than the journal.
+Phase 1 does not store a balance column. Balances, the suggestion, the trip summary, and the dashboard are queries over live expenses, lines, and settlements. The dashboard sums the caller's balance in each group into `net`, `owed`, and `owe`. A group on a trip is small enough that this stays cheap. A stored balance may be added later as a cache, rebuilt from the same rows, never as a source the writes trust more than the journal.
 
 ## Domain package surface
 
@@ -126,9 +127,10 @@ The names can change when the code is written. The responsibilities cannot.
 - Split equal, by shares, by percentage, and by exact amounts.
 - Compute balances for a set of live expenses and settlements.
 - Suggest transfers from those balances.
+- Describe one expense for one member (`describeExpenseForMember`): `lent`, `paid`, or `owe`, and the amount.
 - Assert the zero-sum.
 
-Inputs and outputs are plain data. Member ids are strings. Amounts are integers. Refusals are values, with the gap in paise or in percentage hundredths, not thrown strings the client has to scrape.
+Inputs and outputs are plain data. Member ids are strings. Amounts are integers. The HTTP API names that integer `amount`. Refusals are values, with the gap in paise or in percentage hundredths, not thrown strings the client has to scrape.
 
 ## Tests that gate Phase 1
 
@@ -142,12 +144,13 @@ These run against `packages/domain` and, for the transaction, against the API wi
 - The suggestion for a fixed balance list is stable, and its transfers sum to the debt.
 - A settlement fixture has no category and does not change any member's spending.
 - An edit with a stale version writes nothing.
+- `describeExpenseForMember` reports the dinner payer as lent ₹1600, and a participant who paid nothing as owe ₹400.
 
 ## Client
 
-One Expo Router app. The Phase 1 screens are: sign in, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity.
+One Expo Router app. The Phase 1 screens are: sign in, dashboard, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity. The dashboard is `GET /dashboard`.
 
-The expense form collects the gross, the payer, the members, the mode, and the category, then shows the domain package's lines before the save. The confirmation copy is "You get back …" or "You owe …". The form posts paise. If the network fails, the form stays open and says the save did not happen.
+The expense form collects the gross, the payer, the members, the mode, and the category, then shows the domain package's lines before the save. The confirmation copy is "You get back …" or "You owe …". The form posts `amount` as the integer minor unit. If the network fails, the form stays open and says the save did not happen.
 
 Libraries for Phase 1 screens must work on web. A native-only module does not back a screen the iPhone users depend on. Receipt capture, SMS reading, and UPI intents are later, and each one has to earn a web fallback or an honest "Android only" label when it arrives.
 
