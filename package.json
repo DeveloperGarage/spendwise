@@ -1,0 +1,19 @@
+{
+  "name": "spendwise",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "packages/domain"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w apps/api",
+    "test": "npm run test -w packages/domain && npm run test -w apps/api",
+    "typecheck": "npm run typecheck -w packages/domain && npm run typecheck -w apps/api",
+    "test:domain": "npm run test -w packages/domain",
+    "db:up": "docker compose up -d postgres",
+    "db:migrate": "npm run db:migrate -w apps/api"
+  },
+  "engines": {
+    "node": ">=20.19.4"
+  }
+}

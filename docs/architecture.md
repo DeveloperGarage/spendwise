@@ -22,7 +22,7 @@ The client may compute a preview locally by calling `packages/domain`. The previ
 
 ## Repository
 
-The repo will be a workspace, when code starts. This document does not create it.
+The repo is an npm workspace.
 
 ```text
 apps/mobile     Expo app, native and web
@@ -39,7 +39,7 @@ packages/domain Pure functions, no I/O
 | Client | Expo, Expo Router, TypeScript. Phase 1 screens use APIs that exist on native and on web. |
 | API | Hono 4 on Node LTS. One small service. |
 | Money rules | `packages/domain` |
-| Database | PostgreSQL. Amounts are `bigint` paise. |
+| Database | PostgreSQL. Amounts are `integer` paise. |
 | Queries | Drizzle, including the transaction around each money write. |
 | Auth | Email magic link. Opaque server session. Invite-only. |
 | Android delivery | An internal build. |
@@ -71,7 +71,7 @@ All of these require a session except the magic-link request and the link redemp
 | Balances and suggested transfers | Computed on read. |
 | Trip summary | Total, per-member share, per-category total. Voided rows excluded. Hidden list rows still included. |
 
-The HTTP field is `amount`. It is the same integer the domain model calls paise: the minor unit of the group's currency. For INR, ₹1,200.00 is `120000`. The client parses a typed rupee string with the domain parser and posts that integer. A JSON number with a fractional part is not a valid money input. Field names and routes are in [api.md](api.md).
+Money is integer paise everywhere except the screen. The HTTP field is `amount`, a JSON integer. For INR, ₹1,200.00 is `120000`. Postgres stores that same integer (`integer`, not `numeric` or `bigint`, so Node reads a number, not a string). A JSON string and a JSON number with a fractional part are both invalid money. The person types rupees; the domain parser turns that text into paise before the request. The screen formats paise back into rupees. Field names and routes are in [api.md](api.md).
 
 ## Write path
 
@@ -150,7 +150,7 @@ These run against `packages/domain` and, for the transaction, against the API wi
 
 One Expo Router app. The Phase 1 screens are: sign in, dashboard, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity. The dashboard is `GET /dashboard`.
 
-The expense form collects the gross, the payer, the members, the mode, and the category, then shows the domain package's lines before the save. The confirmation copy is "You get back …" or "You owe …". The form posts `amount` as the integer minor unit. If the network fails, the form stays open and says the save did not happen.
+The expense form collects the gross, the payer, the members, the mode, and the category, then shows the domain package's lines before the save. The confirmation copy is "You get back …" or "You owe …" in rupees. The form posts `amount` as integer paise. If the network fails, the form stays open and says the save did not happen.
 
 Libraries for Phase 1 screens must work on web. A native-only module does not back a screen the iPhone users depend on. Receipt capture, SMS reading, and UPI intents are later, and each one has to earn a web fallback or an honest "Android only" label when it arrives.
 

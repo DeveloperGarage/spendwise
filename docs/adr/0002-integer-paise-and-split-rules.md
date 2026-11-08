@@ -11,7 +11,7 @@ The beta is INR only. The unit is still the minor unit, so a later currency does
 
 ## Decision
 
-Every amount is an integer number of paise. Rupee input is parsed from a decimal string. More than two decimal places is rejected. JSON numbers with a fractional part are not accepted as money.
+Every amount is an integer number of paise in the domain, the database, and the JSON. Rupees are only what a person types and what the screen shows. That typed text is parsed to paise before any request. More than two decimal places is rejected. JSON money is an integer. A JSON string, and a JSON number with a fractional part, are not accepted as money. Postgres stores paise as `integer` so Node reads a number.
 
 Equal splits and share-weighted splits use the largest-remainder method. Leftover paise go to the largest fractional parts. Ties break by member id, ascending. The allocated lines sum to the gross.
 

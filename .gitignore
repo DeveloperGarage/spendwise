@@ -2,3 +2,21 @@
 .idea/
 .vscode/
 .claude/
+
+# Dependencies and build
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env*.local
+
+# OS
+.DS_Store
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*

@@ -10,7 +10,7 @@ A session is required on every route except `POST /auth/magic-links` and `POST /
 
 A group id is checked against membership before the query. A group the caller is not in returns 404.
 
-`amount` is the only money name on the wire. It is an integer in the minor unit of `currency`. For `INR`, ₹1,200.00 is `120000`. That integer is what the domain model calls paise. A JSON number with a fractional part is rejected. The client parses a typed rupee string with `packages/domain` and posts the integer.
+`amount` is the only money name on the wire. It is a JSON integer of paise, not a string and not a decimal. For `INR`, ₹1,200.00 is `120000`. A string, and a number with a fractional part, are both `422 VALIDATION_FAILED`. Rupees exist only on the screen: the person types them, `packages/domain` turns that text into paise, and the client formats paise back into rupees to display.
 
 A positive `balance` means the group owes that member.
 
