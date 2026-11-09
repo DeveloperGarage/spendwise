@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
 import { BRAND_GRADIENT, LogoBadge } from '@/components/logo-badge';
+import { TextLink } from '@/components/text-link';
 import { useTheme } from '@/hooks/use-theme';
 
 const WIDE_BREAKPOINT = 768;
@@ -15,16 +16,6 @@ export default function LandingScreen() {
 
   const onGetStarted = () => { /* TODO: navigate to sign-up once built */ };
   const onSignIn = () => { /* TODO: navigate to sign-in once built */ };
-
-  const signInLink = (
-    <Pressable
-      accessibilityRole="link"
-      hitSlop={8}
-      style={({ pressed }) => [styles.signIn, pressed && styles.pressed]}
-      onPress={onSignIn}>
-      <Text style={[styles.signInText, { color: theme.primary }]}>I already have an account</Text>
-    </Pressable>
-  );
 
   if (isWide) {
     return (
@@ -46,15 +37,11 @@ export default function LandingScreen() {
             </Text>
             <View style={styles.panelMidSpacer} />
             <Button label="Get Started" onPress={onGetStarted} />
-            <Pressable
-              accessibilityRole="link"
-              hitSlop={8}
-              style={({ pressed }) => [styles.signInWide, pressed && styles.pressed]}
-              onPress={onSignIn}>
-              <Text style={[styles.signInText, { color: theme.primary }]}>
-                I already have an account
-              </Text>
-            </Pressable>
+            <TextLink
+              label="I already have an account"
+              onPress={onSignIn}
+              style={styles.signInWide}
+            />
             <View style={styles.panelBottomSpacer} />
           </View>
         </View>
@@ -79,7 +66,11 @@ export default function LandingScreen() {
         <View style={styles.bottomSpacer} />
 
         <Button label="Get Started" onPress={onGetStarted} />
-        {signInLink}
+        <TextLink
+          label="I already have an account"
+          onPress={onSignIn}
+          style={styles.signIn}
+        />
       </View>
     </SafeAreaView>
   );
@@ -90,15 +81,6 @@ const styles = StyleSheet.create({
   signIn: {
     alignSelf: 'center',
     marginTop: 18,
-    paddingVertical: 6,
-  },
-  signInText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: 600,
-  },
-  pressed: {
-    opacity: 0.6,
   },
 
   // ----- Mobile (stacked card) -----
@@ -182,7 +164,6 @@ const styles = StyleSheet.create({
   signInWide: {
     alignSelf: 'flex-end',
     marginTop: 14,
-    paddingVertical: 6,
   },
   panelBottomSpacer: {
     flex: 1.7,
