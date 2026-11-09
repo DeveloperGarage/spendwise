@@ -16,6 +16,9 @@ export const Colors = {
     primaryText: '#FFFFFF',
     surface: '#FFFFFF',
     border: '#E2E3EC',
+    positive: '#15994F',
+    negative: '#E5484D',
+    avatarSurface: '#E9EEFB',
   },
   dark: {
     text: '#F3F2FB',
@@ -27,6 +30,9 @@ export const Colors = {
     primaryText: '#14121F',
     surface: '#211F33',
     border: '#312E47',
+    positive: '#4ADE80',
+    negative: '#FF6369',
+    avatarSurface: '#2A2747',
   },
 } as const;
 

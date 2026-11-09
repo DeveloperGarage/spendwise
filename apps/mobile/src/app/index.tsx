@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { BrandHero } from '@/components/brand-hero';
 import { Button } from '@/components/button';
@@ -10,9 +11,11 @@ import { useTheme } from '@/hooks/use-theme';
 
 export default function LandingScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { isWide } = useBreakpoint();
 
-  const onGoogle = () => { /* TODO: start Google OAuth flow */ };
+  // TODO: start Google OAuth; routing straight to the dashboard for now.
+  const onGoogle = () => router.push('/dashboard');
 
   const googleButton = (
     <Button
