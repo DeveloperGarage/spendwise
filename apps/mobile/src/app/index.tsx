@@ -3,9 +3,9 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
+import { BRAND_GRADIENT, LogoBadge } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
 
-const BRAND_GRADIENT = ['#6C5CE7', '#8B7CF6'] as const;
 const WIDE_BREAKPOINT = 768;
 
 export default function LandingScreen() {
@@ -30,13 +30,11 @@ export default function LandingScreen() {
     return (
       <View style={[styles.wideRoot, { backgroundColor: theme.background }]}>
         <LinearGradient
-          colors={BRAND_GRADIENT}
+          colors={[BRAND_GRADIENT[1], BRAND_GRADIENT[0]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}>
-          <View style={styles.heroBadge}>
-            <Text style={styles.heroGlyph}>₹</Text>
-          </View>
+          <LogoBadge size={64} />
           <Text style={styles.heroWordmark}>Spendwise</Text>
         </LinearGradient>
 
@@ -69,13 +67,7 @@ export default function LandingScreen() {
       <View style={styles.card}>
         <View style={styles.topSpacer} />
 
-        <LinearGradient
-          colors={BRAND_GRADIENT}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.logoBadge}>
-          <Text style={styles.logoGlyph}>₹</Text>
-        </LinearGradient>
+        <LogoBadge size={64} />
 
         <View style={styles.gapSpacer} />
 
@@ -126,19 +118,6 @@ const styles = StyleSheet.create({
   topSpacer: {
     flex: 1.9,
   },
-  logoBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoGlyph: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: 700,
-    lineHeight: 32,
-  },
   gapSpacer: {
     flex: 1.5,
   },
@@ -170,20 +149,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 48,
     padding: 48,
-  },
-  heroBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-  },
-  heroGlyph: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: 700,
-    lineHeight: 30,
   },
   heroWordmark: {
     color: '#FFFFFF',
