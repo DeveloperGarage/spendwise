@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Redirect, type Href } from 'expo-router';
 
 import { BrandHero } from '@/components/brand-hero';
 import { Button } from '@/components/button';
@@ -8,14 +8,26 @@ import { GoogleIcon } from '@/components/google-icon';
 import { LogoBadge } from '@/components/logo-badge';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useTheme } from '@/hooks/use-theme';
+import { startGoogleSignIn } from '@/lib/api';
+import { useMe } from '@/lib/session';
 
 export default function LandingScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const { isWide } = useBreakpoint();
+  const me = useMe();
 
-  // TODO: start Google OAuth; routing straight to the dashboard for now.
-  const onGoogle = () => router.push('/dashboard');
+  const onGoogle = () => startGoogleSignIn();
+
+  if (me.isPending) {
+    return (
+      <View style={[styles.loading, { backgroundColor: theme.background }]}>
+        <ActivityIndicator color={theme.primary} />
+      </View>
+    );
+  }
+  if (me.data) {
+    return <Redirect href={(me.data.profileCompleted ? '/dashboard' : '/profile') as Href} />;
+  }
 
   const googleButton = (
     <Button
@@ -69,6 +81,11 @@ export default function LandingScreen() {
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   // ----- Mobile (stacked card) -----
   safeArea: {
     flex: 1,

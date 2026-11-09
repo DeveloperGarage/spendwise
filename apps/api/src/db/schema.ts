@@ -9,10 +9,16 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+export const allowedEmails = pgTable("allowed_emails", {
+  email: text("email").primaryKey(),
+  suggestedDisplayName: text("suggested_display_name"),
+});
+
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull(),
   displayName: text("display_name").notNull(),
+  profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [uniqueIndex("users_email_idx").on(table.email)]);
 

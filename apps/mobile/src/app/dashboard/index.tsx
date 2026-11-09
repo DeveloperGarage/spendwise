@@ -1,10 +1,12 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, type Href } from 'expo-router';
 
 import { Button } from '@/components/button';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
+import { useMe } from '@/lib/session';
 
 /** Groups the balance digits using the Indian numbering system (e.g. 12,34,567). */
 function groupIndian(value: number): string {
@@ -29,7 +31,6 @@ type Group = {
 };
 
 const GREETING = 'Good evening';
-const USER_NAME = 'Aman';
 const NET_OWED = 2210;
 const NET_OWE = 650;
 
@@ -41,7 +42,22 @@ const GROUPS: Group[] = [
 
 export default function DashboardScreen() {
   const theme = useTheme();
+  const me = useMe();
   const net = NET_OWED - NET_OWE;
+
+  if (me.isPending) {
+    return (
+      <View style={[styles.loading, { backgroundColor: theme.background }]}>
+        <ActivityIndicator color={theme.primary} />
+      </View>
+    );
+  }
+  if (!me.data) {
+    return <Redirect href="/" />;
+  }
+  if (!me.data.profileCompleted) {
+    return <Redirect href={'/profile' as Href} />;
+  }
 
   const onAddExpense = () => { /* TODO: open the add-expense flow */ };
   const onSeeAll = () => { /* TODO: navigate to the full groups list */ };
@@ -56,7 +72,7 @@ export default function DashboardScreen() {
           <View style={styles.header}>
             <View style={styles.headerText}>
               <Text style={[styles.greeting, { color: theme.textSecondary }]}>{GREETING}</Text>
-              <Text style={[styles.name, { color: theme.text }]}>{USER_NAME}</Text>
+              <Text style={[styles.name, { color: theme.text }]}>{me.data.displayName}</Text>
             </View>
             <View style={[styles.avatar, { backgroundColor: theme.avatarSurface }]} />
           </View>
@@ -137,6 +153,11 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   safeArea: {
     flex: 1,
     alignItems: 'center',
