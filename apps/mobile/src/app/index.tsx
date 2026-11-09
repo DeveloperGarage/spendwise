@@ -1,102 +1,225 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Button } from '@/components/button';
+import { useTheme } from '@/hooks/use-theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+const BRAND_GRADIENT = ['#6C5CE7', '#8B7CF6'] as const;
+const WIDE_BREAKPOINT = 768;
+
+export default function LandingScreen() {
+  const theme = useTheme();
+  const { width } = useWindowDimensions();
+  const isWide = width >= WIDE_BREAKPOINT;
+
+  const onGetStarted = () => { /* TODO: navigate to sign-up once built */ };
+  const onSignIn = () => { /* TODO: navigate to sign-in once built */ };
+
+  const signInLink = (
+    <Pressable
+      accessibilityRole="link"
+      hitSlop={8}
+      style={({ pressed }) => [styles.signIn, pressed && styles.pressed]}
+      onPress={onSignIn}>
+      <Text style={[styles.signInText, { color: theme.primary }]}>I already have an account</Text>
+    </Pressable>
+  );
+
+  if (isWide) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <View style={[styles.wideRoot, { backgroundColor: theme.background }]}>
+        <LinearGradient
+          colors={BRAND_GRADIENT}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}>
+          <View style={styles.heroBadge}>
+            <Text style={styles.heroGlyph}>₹</Text>
+          </View>
+          <Text style={styles.heroWordmark}>Spendwise</Text>
+        </LinearGradient>
+
+        <View style={styles.panel}>
+          <View style={styles.panelContent}>
+            <View style={styles.panelTopSpacer} />
+            <Text style={[styles.panelTitle, { color: theme.textSecondary }]}>
+              Split bills with friends and{'\n'}settle up without the awkward math.
+            </Text>
+            <View style={styles.panelMidSpacer} />
+            <Button label="Get Started" onPress={onGetStarted} />
+            <Pressable
+              accessibilityRole="link"
+              hitSlop={8}
+              style={({ pressed }) => [styles.signInWide, pressed && styles.pressed]}
+              onPress={onSignIn}>
+              <Text style={[styles.signInText, { color: theme.primary }]}>
+                I already have an account
+              </Text>
+            </Pressable>
+            <View style={styles.panelBottomSpacer} />
+          </View>
+        </View>
+      </View>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <View style={styles.card}>
+        <View style={styles.topSpacer} />
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+        <LinearGradient
+          colors={BRAND_GRADIENT}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.logoBadge}>
+          <Text style={styles.logoGlyph}>₹</Text>
+        </LinearGradient>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <View style={styles.gapSpacer} />
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        <Text style={[styles.title, { color: theme.text }]}>Spendwise</Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          Split bills with friends and{'\n'}settle up without the awkward math.
+        </Text>
 
-        {Platform.OS === 'web' && <WebBadge />}
+        <View style={styles.bottomSpacer} />
 
-        <View className="rounded-lg bg-emerald-500 px-4 py-2">
-          <Text className="text-sm font-semibold text-white">NativeWind is wired up</Text>
-        </View>
-      </SafeAreaView>
-    </ThemedView>
+        <Button label="Get Started" onPress={onGetStarted} />
+        {signInLink}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+  // ----- Shared -----
+  signIn: {
+    alignSelf: 'center',
+    marginTop: 18,
+    paddingVertical: 6,
   },
+  signInText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: 600,
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+
+  // ----- Mobile (stacked card) -----
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  card: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    width: '100%',
+    maxWidth: 440,
+    maxHeight: 900,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+  topSpacer: {
+    flex: 1.9,
+  },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoGlyph: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: 700,
+    lineHeight: 32,
+  },
+  gapSpacer: {
+    flex: 1.5,
   },
   title: {
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: 700,
+    textAlign: 'left',
+  },
+  subtitle: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: 500,
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+  bottomSpacer: {
+    flex: 2.7,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  // ----- Desktop / wide (split screen) -----
+  wideRoot: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  hero: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 48,
+    padding: 48,
+  },
+  heroBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  heroGlyph: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: 700,
+    lineHeight: 30,
+  },
+  heroWordmark: {
+    color: '#FFFFFF',
+    fontSize: 40,
+    lineHeight: 46,
+    fontWeight: 700,
+    letterSpacing: 0.2,
+  },
+  panel: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 48,
+  },
+  panelContent: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 420,
+  },
+  panelTopSpacer: {
+    flex: 2.6,
+  },
+  panelTitle: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: 500,
+    textAlign: 'center',
+  },
+  panelMidSpacer: {
+    flex: 2.3,
+  },
+  signInWide: {
+    alignSelf: 'flex-end',
+    marginTop: 14,
+    paddingVertical: 6,
+  },
+  panelBottomSpacer: {
+    flex: 1.7,
   },
 });
