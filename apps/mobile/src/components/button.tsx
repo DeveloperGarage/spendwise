@@ -1,8 +1,10 @@
+import { type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
   Text,
+  View,
   type PressableProps,
   type StyleProp,
   type ViewStyle,
@@ -10,15 +12,17 @@ import {
 
 import { useTheme } from '@/hooks/use-theme';
 
-export type ButtonVariant = 'primary';
+export type ButtonVariant = 'primary' | 'secondary';
 
 export type ButtonProps = Omit<PressableProps, 'style'> & {
   /** The button text — the "Label" configuration from the Figma component. */
   label: string;
-  /** Visual style. Currently only the primary CTA used across the app. */
+  /** Visual style. `primary` is the brand CTA; `secondary` is an outlined surface button (e.g. OAuth). */
   variant?: ButtonVariant;
   /** Shows a spinner and blocks presses while an action is in flight. */
   loading?: boolean;
+  /** Optional leading element rendered before the label (e.g. a provider icon). */
+  icon?: ReactNode;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -32,11 +36,15 @@ export function Button({
   variant = 'primary',
   loading = false,
   disabled,
+  icon,
   style,
   ...rest
 }: ButtonProps) {
   const theme = useTheme();
   const isDisabled = disabled || loading;
+  const isSecondary = variant === 'secondary';
+  const backgroundColor = isSecondary ? theme.surface : theme.primary;
+  const textColor = isSecondary ? theme.text : theme.primaryText;
 
   return (
     <Pressable
@@ -45,7 +53,8 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
-        { backgroundColor: theme.primary },
+        { backgroundColor },
+        isSecondary && { borderWidth: 1, borderColor: theme.border },
         pressed && styles.pressed,
         isDisabled && styles.disabled,
         style,
@@ -53,11 +62,14 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={theme.primaryText} />
+        <ActivityIndicator color={textColor} />
       ) : (
-        <Text style={[styles.label, { color: theme.primaryText }]} numberOfLines={1}>
-          {label}
-        </Text>
+        <View style={styles.content}>
+          {icon}
+          <Text style={[styles.label, { color: textColor }]} numberOfLines={1}>
+            {label}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
@@ -71,6 +83,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
   },
   pressed: {
     opacity: 0.85,

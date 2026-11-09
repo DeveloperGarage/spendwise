@@ -14,6 +14,14 @@ export const Colors = {
     textSecondary: '#6E7191',
     primary: '#6C5CE7',
     primaryText: '#FFFFFF',
+    surface: '#FFFFFF',
+<<<<<<< Updated upstream
+=======
+    infoSurface: '#E9F2FE',
+    infoAccent: '#3B82F6',
+    danger: '#E5484D',
+>>>>>>> Stashed changes
+    border: '#E2E3EC',
   },
   dark: {
     text: '#F3F2FB',
@@ -23,6 +31,14 @@ export const Colors = {
     textSecondary: '#A29FC2',
     primary: '#8B7CFF',
     primaryText: '#14121F',
+    surface: '#211F33',
+<<<<<<< Updated upstream
+=======
+    infoSurface: '#192B40',
+    infoAccent: '#5B9DF9',
+    danger: '#FF6369',
+>>>>>>> Stashed changes
+    border: '#312E47',
   },
 } as const;
 

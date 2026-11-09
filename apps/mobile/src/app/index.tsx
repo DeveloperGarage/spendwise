@@ -1,33 +1,44 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
+import { BrandHero } from '@/components/brand-hero';
 import { Button } from '@/components/button';
+<<<<<<< Updated upstream
+import { GoogleIcon } from '@/components/google-icon';
 import { BRAND_GRADIENT, LogoBadge } from '@/components/logo-badge';
+=======
+import { LogoBadge } from '@/components/logo-badge';
 import { TextLink } from '@/components/text-link';
+import { useBreakpoint } from '@/hooks/use-breakpoint';
+>>>>>>> Stashed changes
 import { useTheme } from '@/hooks/use-theme';
-
-const WIDE_BREAKPOINT = 768;
 
 export default function LandingScreen() {
   const theme = useTheme();
-  const { width } = useWindowDimensions();
-  const isWide = width >= WIDE_BREAKPOINT;
+  const router = useRouter();
+  const { isWide } = useBreakpoint();
 
+<<<<<<< Updated upstream
+  const onGoogle = () => { /* TODO: start Google OAuth flow */ };
+
+  const googleButton = (
+    <Button
+      label="Continue with Google"
+      variant="secondary"
+      icon={<GoogleIcon size={20} />}
+      onPress={onGoogle}
+    />
+  );
+=======
   const onGetStarted = () => { /* TODO: navigate to sign-up once built */ };
-  const onSignIn = () => { /* TODO: navigate to sign-in once built */ };
+  const onSignIn = () => router.push('/login');
+>>>>>>> Stashed changes
 
   if (isWide) {
     return (
       <View style={[styles.wideRoot, { backgroundColor: theme.background }]}>
-        <LinearGradient
-          colors={[BRAND_GRADIENT[1], BRAND_GRADIENT[0]]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}>
-          <LogoBadge size={64} />
-          <Text style={styles.heroWordmark}>Spendwise</Text>
-        </LinearGradient>
+        <BrandHero />
 
         <View style={styles.panel}>
           <View style={styles.panelContent}>
@@ -36,12 +47,7 @@ export default function LandingScreen() {
               Split bills with friends and{'\n'}settle up without the awkward math.
             </Text>
             <View style={styles.panelMidSpacer} />
-            <Button label="Get Started" onPress={onGetStarted} />
-            <TextLink
-              label="I already have an account"
-              onPress={onSignIn}
-              style={styles.signInWide}
-            />
+            {googleButton}
             <View style={styles.panelBottomSpacer} />
           </View>
         </View>
@@ -65,24 +71,13 @@ export default function LandingScreen() {
 
         <View style={styles.bottomSpacer} />
 
-        <Button label="Get Started" onPress={onGetStarted} />
-        <TextLink
-          label="I already have an account"
-          onPress={onSignIn}
-          style={styles.signIn}
-        />
+        {googleButton}
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // ----- Shared -----
-  signIn: {
-    alignSelf: 'center',
-    marginTop: 18,
-  },
-
   // ----- Mobile (stacked card) -----
   safeArea: {
     flex: 1,
@@ -125,20 +120,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
-  hero: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 48,
-    padding: 48,
-  },
-  heroWordmark: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    lineHeight: 46,
-    fontWeight: 700,
-    letterSpacing: 0.2,
-  },
   panel: {
     flex: 1,
     alignItems: 'center',
@@ -160,10 +141,6 @@ const styles = StyleSheet.create({
   },
   panelMidSpacer: {
     flex: 2.3,
-  },
-  signInWide: {
-    alignSelf: 'flex-end',
-    marginTop: 14,
   },
   panelBottomSpacer: {
     flex: 1.7,
