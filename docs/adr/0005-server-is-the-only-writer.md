@@ -25,4 +25,4 @@ Sign-in is an email magic link. Sessions are opaque and stored on the server. Th
 - A lost connection cannot create a balance that exists only on one phone.
 - The group cannot log an expense with no signal. The form must make that obvious.
 - Direct database access from the app, and client-side Supabase writes to money tables, are out of bounds for Phase 1. Adding them means replacing this record.
-- Email delivery and the API host are chosen when the beta is deployed. Neither choice changes who is allowed to write.
+- The API host and the magic-link mailer are [0008](0008-cloudflare-and-supabase.md). That choice does not change who is allowed to write.

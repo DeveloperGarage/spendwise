@@ -1,6 +1,6 @@
 # Architecture decision records
 
-Accepted for the private-beta baseline on 7 November 2026. Each record is the decision and its consequences. The long form of the money rules is [../domain-model.md](../domain-model.md). The system those decisions sit in is [../architecture.md](../architecture.md).
+Accepted for the private-beta baseline on 7 November 2026. Deploy and identity were settled on 8 November 2026. Each record is the decision and its consequences. The long form of the money rules is [../domain-model.md](../domain-model.md). The system those decisions sit in is [../architecture.md](../architecture.md).
 
 | Record | Decision |
 | --- | --- |
@@ -11,3 +11,4 @@ Accepted for the private-beta baseline on 7 November 2026. Each record is the de
 | [0005](0005-server-is-the-only-writer.md) | The API commits money inside one transaction. Phase 1 does not save offline. |
 | [0006](0006-shared-domain-package.md) | Split, balance, and suggestion math live in one TypeScript package used by the client preview and the API. |
 | [0007](0007-frontend-stack.md) | The Expo client is built from NativeWind, TanStack Query, Zustand, and React Hook Form with Zod. |
+| [0008](0008-cloudflare-and-supabase.md) | One Cloudflare Worker serves the web build and Hono. Supabase is Postgres and the magic-link mailer. |

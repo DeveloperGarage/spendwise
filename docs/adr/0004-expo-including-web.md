@@ -13,8 +13,8 @@ The app is forms, lists, and balances. It does not need a custom rendering engin
 
 The client is one Expo app, with Expo Router and TypeScript.
 
-- Android ships as an internal build.
-- iPhone users use the web build in Safari.
+- Android ships as an internal GitHub Actions build. How that artifact is produced, and where the web build is served, is [0008](0008-cloudflare-and-supabase.md).
+- iPhone users use the web build in Safari, from the same origin as the API.
 - A native iOS build can ship from the same project. The trip does not wait for it.
 - Every Phase 1 screen uses libraries that work on web as well as on native.
 

@@ -1,8 +1,8 @@
 # Spendwise architecture
 
-Status: planning baseline. 7 November 2026.
+Status: planning baseline. 8 November 2026.
 
-Phase 1 is a shared journal with one writer. Android and mobile Safari are two builds of the same Expo client. The money rules live in one TypeScript package that both the preview and the API call. PostgreSQL stores the journal. Balances are computed from it.
+Phase 1 is a shared journal with one writer. Android and mobile Safari are two builds of the same Expo client. The money rules live in one TypeScript package that both the preview and the API call. PostgreSQL stores the journal. Balances are computed from it. One Cloudflare Worker serves the web build and the API. Supabase is the database and the magic-link mailer.
 
 The rules themselves are in [domain-model.md](domain-model.md). The HTTP routes and bodies are in [api.md](api.md). Why these choices were made is in [adr/README.md](adr/README.md). What the beta must do for the group is in [product-plan.md](product-plan.md).
 
@@ -10,12 +10,15 @@ The rules themselves are in [domain-model.md](domain-model.md). The HTTP routes 
 
 ```mermaid
 flowchart LR
-  phone["Expo on Android"] --> api["Hono API"]
-  safari["Expo web in Safari"] --> api
+  phone["Expo on Android"] --> worker["Cloudflare Worker"]
+  safari["Expo web in Safari"] --> worker
+  worker --> spa["Static web build"]
+  worker --> api["Hono at /api"]
   api --> domain["packages/domain"]
   phone --> domain
   safari --> domain
-  api --> db["PostgreSQL"]
+  api --> db["Supabase PostgreSQL"]
+  api --> auth["Supabase Auth email"]
 ```
 
 The client may compute a preview locally by calling `packages/domain`. The preview is a hint. The API runs the same functions inside a database transaction and is the only writer. A preview that disagrees with a committed result is a bug in the client, not a second opinion.
@@ -37,17 +40,18 @@ packages/domain Pure functions, no I/O
 | Piece | Choice |
 | --- | --- |
 | Client | Expo, Expo Router, TypeScript. Phase 1 screens use APIs that exist on native and on web. |
-| API | Hono 4 on Node LTS. One small service. |
+| API | Hono 4. Local and tests on Node LTS. Production is Cloudflare Workers. |
 | Money rules | `packages/domain` |
-| Database | PostgreSQL. Amounts are `integer` paise. |
-| Queries | Drizzle, including the transaction around each money write. |
-| Auth | Email magic link. Opaque server session. Invite-only. |
-| Android delivery | An internal build. |
-| iPhone delivery | The web build, opened in Safari. Add to Home Screen is documented in the trip runbook, written when the build exists. |
+| Database | PostgreSQL on Supabase in Mumbai. Amounts are `integer` paise. |
+| Queries | Drizzle with `pg` through Hyperdrive, including the transaction around each money write. |
+| Auth | Email magic link via Supabase Auth. Opaque server session in Hono. Invite-only. |
+| Host | One Cloudflare Worker: Expo web static assets, Hono at `/api`. |
+| Android delivery | An internal GitHub Actions build. |
+| iPhone delivery | The web build on that Worker, opened in Safari. Add to Home Screen is documented in the trip runbook, written when the build exists. |
 
 Native iOS can be added from the same client. It is not on the path that decides whether the trip can use Spendwise.
 
-Nest is the wrong size for this API. Fastify is as fast as Hono on trivial Node handlers; a request that waits on Postgres does not feel that gap. Hono keeps the beta service small. Mailing provider and the host that runs the API are chosen at deploy time. They are not part of this baseline. The deploy shape is one API process and managed Postgres.
+Nest is the wrong size for this API. Fastify is as fast as Hono on trivial Node handlers; a request that waits on Postgres does not feel that gap. Hono keeps the beta service small. The host and the mailer are [0008](adr/0008-cloudflare-and-supabase.md): two platforms, the Worker as one origin, Supabase as Postgres and identity email. The Expo app does not talk to Supabase. The writer is still Hono, as in [0005](adr/0005-server-is-the-only-writer.md).
 
 ## Phase 1 operations
 
@@ -113,7 +117,9 @@ A database trigger that restates the zero-sum check can wait. The transaction is
 - The invite token is the only way in. Any member can rotate it, which invalidates the previous link.
 - Phase 1 does not support leaving a group. Everyone who joins stays through the trip, including in the balances.
 
-Sessions are opaque tokens stored on the server. The native app keeps the token in the platform secure store and sends `Authorization: Bearer`. The web build uses an httpOnly, Secure cookie set by the API, and sends requests with credentials. Both hit the same routes.
+Sessions are opaque tokens stored on the server. The native app keeps the token in the platform secure store and sends `Authorization: Bearer`. The web build uses an httpOnly, Secure cookie set by the API, and sends requests with credentials. Both hit the same `/api` routes on the Worker. Safari and the API share that origin, so the cookie does not cross a site.
+
+The magic-link email is sent by Supabase Auth. Redeem is `POST /api/auth/sessions`. A GET of the link must not consume the token. Cloudflare Access is not the login.
 
 ## Read model
 
@@ -148,7 +154,7 @@ These run against `packages/domain` and, for the transaction, against the API wi
 
 ## Client
 
-One Expo Router app. The Phase 1 screens are: sign in, dashboard, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity. The dashboard is `GET /dashboard`.
+One Expo Router app. The Phase 1 screens are: sign in, dashboard, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity. The dashboard is `GET /api/dashboard`. The web build is static assets on the Worker. Android is the GitHub Actions APK.
 
 The expense form collects the gross, the payer, the members, the mode, and the category, then shows the domain package's lines before the save. The confirmation copy is "You get back …" or "You owe …" in rupees. The form posts `amount` as integer paise. If the network fails, the form stays open and says the save did not happen.
 
@@ -158,7 +164,7 @@ Libraries for Phase 1 screens must work on web. A native-only module does not ba
 
 Enough to see the journal. Column-level detail is settled when the migration is written.
 
-- `users`
+- `users`, created on first successful magic-link redeem, alongside Supabase `auth.users`
 - `sessions`
 - `groups`, with `currency` defaulting to `INR`
 - `memberships`

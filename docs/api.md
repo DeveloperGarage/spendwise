@@ -1,12 +1,14 @@
 # Spendwise API
 
-Status: planning baseline. 7 November 2026.
+Status: planning baseline. 8 November 2026.
 
-Phase 1 HTTP contract. The caller is the session. A group is the shared aggregate. Money rules are in [domain-model.md](domain-model.md). The system those routes sit in is [architecture.md](architecture.md).
+Phase 1 HTTP contract. The caller is the session. A group is the shared aggregate. Money rules are in [domain-model.md](domain-model.md). The system those routes sit in is [architecture.md](architecture.md). The host that serves these routes is [0008](adr/0008-cloudflare-and-supabase.md).
 
 ## Conventions
 
-A session is required on every route except `POST /auth/magic-links` and `POST /auth/sessions`. The web client sends the httpOnly Secure cookie. The native client sends `Authorization: Bearer`.
+The Hono app is mounted at `/api` on the Cloudflare Worker that also serves the Expo web build. Paths in this document are that mount: `POST /auth/magic-links` is `POST /api/auth/magic-links` on the wire. There is no `/v1` prefix. There is no public signup.
+
+A session is required on every route except `POST /auth/magic-links` and `POST /auth/sessions`. The web client sends the httpOnly Secure cookie to the same origin. The native client sends `Authorization: Bearer`.
 
 A group id is checked against membership before the query. A group the caller is not in returns 404.
 
@@ -26,9 +28,9 @@ Errors are one shape.
 { "error": { "code": "SPLIT_REFUSED", "message": "The shares do not add up.", "details": { "gap": 100 }, "requestId": "req_1" } }
 ```
 
-There is no `/v1` prefix. There is no public signup.
-
 ## Auth
+
+Supabase Auth sends the email. Hono verifies the token, writes `public.users` on first redeem, and creates the opaque session. The client does not call Supabase.
 
 ### POST /auth/magic-links
 
@@ -44,7 +46,7 @@ There is no `/v1` prefix. There is no public signup.
 { "token": "..." }
 ```
 
-`201`. The token is the one from the email. The first successful redeem of an allowed email creates the user. Web sets the cookie. Native receives the bearer token once.
+`201`. The token is the one from the email. Redeem is this POST, not a GET, so a mail scanner that fetches the link does not consume it. The first successful redeem of an allowed email creates the user. Web sets the cookie. Native receives the bearer token once.
 
 ```json
 { "user": { "id": "u_1", "displayName": "Aman", "email": "aman@company.com" } }

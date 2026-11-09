@@ -11,7 +11,7 @@ Three needs follow from that. The screens render the same on Android and in Safa
 
 The team knows React and JavaScript. Some know Kotlin and Flutter. The library choices lean on React knowledge the whole team shares.
 
-This record decides the client only. The backend is already settled in [architecture.md](../architecture.md) and [0005](0005-server-is-the-only-writer.md): a Hono and Drizzle API that is the only writer. This record reads that decision and builds the client against it. It does not change it.
+This record decides the client only. The backend is already settled in [architecture.md](../architecture.md), [0005](0005-server-is-the-only-writer.md), and [0008](0008-cloudflare-and-supabase.md): a Hono and Drizzle API that is the only writer, hosted with the web build on one Cloudflare Worker. This record reads that decision and builds the client against it. It does not change it.
 
 ## Decision
 

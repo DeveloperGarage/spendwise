@@ -2,6 +2,8 @@
 
 The Phase 1 Expo client — one codebase for Android, web, and iOS. Web is the iPhone
 delivery path for the beta (see [`../../docs/adr/0004-expo-including-web.md`](../../docs/adr/0004-expo-including-web.md)).
+In production the web export is static assets on the same Cloudflare Worker as the API
+([`../../docs/adr/0008-cloudflare-and-supabase.md`](../../docs/adr/0008-cloudflare-and-supabase.md)). The Android APK is a GitHub Actions artifact.
 
 Stack and rationale: [`../../docs/adr/0007-frontend-stack.md`](../../docs/adr/0007-frontend-stack.md).
 Expo Router, NativeWind, TanStack Query, Zustand, React Hook Form + Zod, Jest.
