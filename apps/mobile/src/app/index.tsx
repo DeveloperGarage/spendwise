@@ -1,25 +1,17 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
 import { BrandHero } from '@/components/brand-hero';
 import { Button } from '@/components/button';
-<<<<<<< Updated upstream
 import { GoogleIcon } from '@/components/google-icon';
-import { BRAND_GRADIENT, LogoBadge } from '@/components/logo-badge';
-=======
 import { LogoBadge } from '@/components/logo-badge';
-import { TextLink } from '@/components/text-link';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
->>>>>>> Stashed changes
 import { useTheme } from '@/hooks/use-theme';
 
 export default function LandingScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const { isWide } = useBreakpoint();
 
-<<<<<<< Updated upstream
   const onGoogle = () => { /* TODO: start Google OAuth flow */ };
 
   const googleButton = (
@@ -30,10 +22,6 @@ export default function LandingScreen() {
       onPress={onGoogle}
     />
   );
-=======
-  const onGetStarted = () => { /* TODO: navigate to sign-up once built */ };
-  const onSignIn = () => router.push('/login');
->>>>>>> Stashed changes
 
   if (isWide) {
     return (
