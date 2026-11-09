@@ -1,6 +1,6 @@
 # Spendwise API (`apps/api`)
 
-Hono service and Drizzle journal. Money rules live in [`packages/domain`](../../packages/domain). Production is one Cloudflare Worker with the Expo web build; Postgres and magic-link email are Supabase ([`docs/adr/0008-cloudflare-and-supabase.md`](../../docs/adr/0008-cloudflare-and-supabase.md)). On that Worker this app is mounted at `/api`.
+Hono service and Drizzle journal. Money rules live in [`packages/domain`](../../packages/domain). Production is one Cloudflare Worker with the Expo web PWA; Postgres and Google OAuth are Supabase ([`docs/adr/0008-cloudflare-and-supabase.md`](../../docs/adr/0008-cloudflare-and-supabase.md)). On that Worker this app is mounted at `/api`.
 
 ```bash
 # from the repo root

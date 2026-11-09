@@ -17,7 +17,7 @@ If the request fails, the client keeps the form open and shows that nothing was 
 
 Reads for balances and the trip summary run on the server from live rows. The client may show a preview from the shared domain package before the request returns. The committed response replaces the preview.
 
-Sign-in is an email magic link. Sessions are opaque and stored on the server. There is no public signup. Group routes require a membership.
+Sign-in is Google OAuth for emails on the allowlist. Sessions are opaque and stored on the server. There is no public signup. Group routes require a membership.
 
 ## Consequences
 
@@ -25,4 +25,4 @@ Sign-in is an email magic link. Sessions are opaque and stored on the server. Th
 - A lost connection cannot create a balance that exists only on one phone.
 - The group cannot log an expense with no signal. The form must make that obvious.
 - Direct database access from the app, and client-side Supabase writes to money tables, are out of bounds for Phase 1. Adding them means replacing this record.
-- The API host and the magic-link mailer are [0008](0008-cloudflare-and-supabase.md). That choice does not change who is allowed to write.
+- The API host and identity are [0008](0008-cloudflare-and-supabase.md). That choice does not change who is allowed to write.

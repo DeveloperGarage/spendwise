@@ -1,14 +1,14 @@
 # Spendwise API
 
-Status: planning baseline. 8 November 2026.
+Status: planning baseline. 9 November 2026.
 
 Phase 1 HTTP contract. The caller is the session. A group is the shared aggregate. Money rules are in [domain-model.md](domain-model.md). The system those routes sit in is [architecture.md](architecture.md). The host that serves these routes is [0008](adr/0008-cloudflare-and-supabase.md).
 
 ## Conventions
 
-The Hono app is mounted at `/api` on the Cloudflare Worker that also serves the Expo web build. Paths in this document are that mount: `POST /auth/magic-links` is `POST /api/auth/magic-links` on the wire. There is no `/v1` prefix. There is no public signup.
+The Hono app is mounted at `/api` on the Cloudflare Worker that also serves the Expo web PWA. Paths in this document are that mount: `GET /auth/google` is `GET /api/auth/google` on the wire. There is no `/v1` prefix. There is no public signup.
 
-A session is required on every route except `POST /auth/magic-links` and `POST /auth/sessions`. The web client sends the httpOnly Secure cookie to the same origin. The native client sends `Authorization: Bearer`.
+A session is required on every route except `GET /auth/google`, `GET /auth/callback`, and `POST /auth/sessions`. The PWA sends the httpOnly Secure cookie to the same origin.
 
 A group id is checked against membership before the query. A group the caller is not in returns 404.
 
@@ -30,27 +30,35 @@ Errors are one shape.
 
 ## Auth
 
-Supabase Auth sends the email. Hono verifies the token, writes `public.users` on first redeem, and creates the opaque session. The client does not call Supabase.
+Sign-in is Google OAuth only, gated by `allowed_emails`. Email/password and magic link stay off. The Before User Created hook rejects a Google account whose email is not on the list, so no `auth.users` row is created. Hono checks the same table before writing `public.users` and the opaque session.
 
-### POST /auth/magic-links
+The allowlisted address must be the Google account the person will tap. The Expo web app may talk to Google and to Supabase Auth for this login. It does not write journal tables.
 
-```json
-{ "email": "aman@company.com" }
-```
+### GET /auth/google
 
-`202` with an empty body, whether or not that email may sign in. At most one live link. The login screen's copy is a 10-minute expiry.
+Starts Google OAuth. `302` toward Google, through Supabase Auth. `redirectTo` is this Worker's `/api/auth/callback`.
+
+### GET /auth/callback
+
+Return from Supabase Auth. Hono verifies the result, checks `allowed_emails`, creates `public.users` if needed, writes the opaque session, sets the httpOnly Secure cookie, and redirects into the app. If `profileCompleted` is false, that landing is the display-name form.
+
+A GET that a scanner might fetch does not create a session unless it presents a valid OAuth result for an allowlisted email.
 
 ### POST /auth/sessions
 
 ```json
-{ "token": "..." }
+{ "provider": "google", "idToken": "..." }
 ```
 
-`201`. The token is the one from the email. Redeem is this POST, not a GET, so a mail scanner that fetches the link does not consume it. The first successful redeem of an allowed email creates the user. Web sets the cookie. Native receives the bearer token once.
+`201`. If the client already holds a Google id token, it may complete login here instead of the redirect. Hono verifies it with Supabase Auth, checks `allowed_emails`, creates `public.users` if needed, writes the opaque session, and sets the cookie.
+
+An email that is not on the allowlist is `403`. No `public.users` row and no session.
 
 ```json
-{ "user": { "id": "u_1", "displayName": "Aman", "email": "aman@company.com" } }
+{ "user": { "id": "u_1", "displayName": "Aman", "email": "aman@gmail.com", "profileCompleted": false } }
 ```
+
+`displayName` is prefilled from the Google profile on first success. `profileCompleted` is `false` until `PATCH /me`.
 
 ### DELETE /auth/session
 
@@ -59,8 +67,10 @@ Supabase Auth sends the email. Hono verifies the token, writes `public.users` on
 ### GET /me
 
 ```json
-{ "id": "u_1", "displayName": "Aman", "email": "aman@company.com" }
+{ "id": "u_1", "displayName": "Aman", "email": "aman@gmail.com", "profileCompleted": false }
 ```
+
+If `profileCompleted` is `false`, the client shows the display-name form before the dashboard.
 
 ### PATCH /me
 
@@ -68,7 +78,7 @@ Supabase Auth sends the email. Hono verifies the token, writes `public.users` on
 { "displayName": "Aman" }
 ```
 
-Response is the `GET /me` body. This is the only user write.
+Response is the `GET /me` body with `profileCompleted: true`. This is the only user write. They can change the name later the same way.
 
 ## Dashboard
 
@@ -158,7 +168,7 @@ The Expenses tab, newest first.
 }
 ```
 
-`caller.effect` is `lent`, `paid`, or `owe` for that expense alone. `describeExpenseForMember` in `packages/domain` produces it, so Android and Safari use the same words. A cab that Sam paid, where the caller's share is ₹350, is `effect: "owe"` with Sam as `payer`.
+`caller.effect` is `lent`, `paid`, or `owe` for that expense alone. `describeExpenseForMember` in `packages/domain` produces it, so every client uses the same words. A cab that Sam paid, where the caller's share is ₹350, is `effect: "owe"` with Sam as `payer`.
 
 ### POST /groups/:groupId/expenses
 

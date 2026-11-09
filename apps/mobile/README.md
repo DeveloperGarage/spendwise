@@ -1,9 +1,9 @@
 # Spendwise mobile (`apps/mobile`)
 
-The Phase 1 Expo client — one codebase for Android, web, and iOS. Web is the iPhone
-delivery path for the beta (see [`../../docs/adr/0004-expo-including-web.md`](../../docs/adr/0004-expo-including-web.md)).
+The Phase 1 Expo client is a **web PWA**. Anyone with a browser can use it; Add to
+Home Screen is how it sits on a phone (see [`../../docs/adr/0004-expo-including-web.md`](../../docs/adr/0004-expo-including-web.md)).
 In production the web export is static assets on the same Cloudflare Worker as the API
-([`../../docs/adr/0008-cloudflare-and-supabase.md`](../../docs/adr/0008-cloudflare-and-supabase.md)). The Android APK is a GitHub Actions artifact.
+([`../../docs/adr/0008-cloudflare-and-supabase.md`](../../docs/adr/0008-cloudflare-and-supabase.md)). There is no Phase 1 APK or TestFlight build.
 
 Stack and rationale: [`../../docs/adr/0007-frontend-stack.md`](../../docs/adr/0007-frontend-stack.md).
 Expo Router, NativeWind, TanStack Query, Zustand, React Hook Form + Zod, Jest.
@@ -29,7 +29,7 @@ match the Expo SDK. Fix mismatches with `npx expo install --fix`; diagnose with
 ## Running
 
 ```bash
-npm run web       # browser, http://localhost:8081  (iPhone/beta path)
+npm run web       # browser, http://localhost:8081  (Phase 1 path)
 npm run android   # Android emulator or connected device
 npm run ios       # iOS simulator (macOS only)
 npm start         # interactive: pick a target, show QR for Expo Go

@@ -1,8 +1,8 @@
 # Spendwise architecture
 
-Status: planning baseline. 8 November 2026.
+Status: planning baseline. 9 November 2026.
 
-Phase 1 is a shared journal with one writer. Android and mobile Safari are two builds of the same Expo client. The money rules live in one TypeScript package that both the preview and the API call. PostgreSQL stores the journal. Balances are computed from it. One Cloudflare Worker serves the web build and the API. Supabase is the database and the magic-link mailer.
+Phase 1 is a shared journal with one writer. The client is an Expo web PWA: any phone, tablet, or laptop with a browser. The money rules live in one TypeScript package that both the preview and the API call. PostgreSQL stores the journal. Balances are computed from it. One Cloudflare Worker serves the PWA and the API. Supabase is the database and Google OAuth, gated by an email allowlist.
 
 The rules themselves are in [domain-model.md](domain-model.md). The HTTP routes and bodies are in [api.md](api.md). Why these choices were made is in [adr/README.md](adr/README.md). What the beta must do for the group is in [product-plan.md](product-plan.md).
 
@@ -10,15 +10,13 @@ The rules themselves are in [domain-model.md](domain-model.md). The HTTP routes 
 
 ```mermaid
 flowchart LR
-  phone["Expo on Android"] --> worker["Cloudflare Worker"]
-  safari["Expo web in Safari"] --> worker
-  worker --> spa["Static web build"]
+  browser["Browser or installed PWA"] --> worker["Cloudflare Worker"]
+  worker --> spa["Expo web static assets"]
   worker --> api["Hono at /api"]
   api --> domain["packages/domain"]
-  phone --> domain
-  safari --> domain
+  browser --> domain
   api --> db["Supabase PostgreSQL"]
-  api --> auth["Supabase Auth email"]
+  api --> auth["Supabase Auth Google"]
 ```
 
 The client may compute a preview locally by calling `packages/domain`. The preview is a hint. The API runs the same functions inside a database transaction and is the only writer. A preview that disagrees with a committed result is a bug in the client, not a second opinion.
@@ -28,7 +26,7 @@ The client may compute a preview locally by calling `packages/domain`. The previ
 The repo is an npm workspace.
 
 ```text
-apps/mobile     Expo app, native and web
+apps/mobile     Expo app. Phase 1 ships the web PWA.
 apps/api        Hono HTTP API
 packages/domain Pure functions, no I/O
 ```
@@ -39,28 +37,27 @@ packages/domain Pure functions, no I/O
 
 | Piece | Choice |
 | --- | --- |
-| Client | Expo, Expo Router, TypeScript. Phase 1 screens use APIs that exist on native and on web. |
+| Client | Expo web PWA, Expo Router, TypeScript. Phase 1 screens use web APIs. |
 | API | Hono 4. Local and tests on Node LTS. Production is Cloudflare Workers. |
 | Money rules | `packages/domain` |
 | Database | PostgreSQL on Supabase in Mumbai. Amounts are `integer` paise. |
 | Queries | Drizzle with `pg` through Hyperdrive, including the transaction around each money write. |
-| Auth | Email magic link via Supabase Auth. Opaque server session in Hono. Invite-only. |
-| Host | One Cloudflare Worker: Expo web static assets, Hono at `/api`. |
-| Android delivery | An internal GitHub Actions build. |
-| iPhone delivery | The web build on that Worker, opened in Safari. Add to Home Screen is documented in the trip runbook, written when the build exists. |
+| Auth | Google OAuth via Supabase Auth, gated by `allowed_emails`. Opaque server session in Hono. |
+| Host | One Cloudflare Worker: Expo web PWA (manifest included), Hono at `/api`. |
+| Delivery | The Worker origin in a browser, or Add to Home Screen. Any device. |
 
-Native iOS can be added from the same client. It is not on the path that decides whether the trip can use Spendwise.
+Native Android and iOS can be added from the same Expo project later. They are not on the path that decides whether the trip can use Spendwise.
 
-Nest is the wrong size for this API. Fastify is as fast as Hono on trivial Node handlers; a request that waits on Postgres does not feel that gap. Hono keeps the beta service small. The host and the mailer are [0008](adr/0008-cloudflare-and-supabase.md): two platforms, the Worker as one origin, Supabase as Postgres and identity email. The Expo app does not talk to Supabase. The writer is still Hono, as in [0005](adr/0005-server-is-the-only-writer.md).
+Nest is the wrong size for this API. Fastify is as fast as Hono on trivial Node handlers; a request that waits on Postgres does not feel that gap. Hono keeps the beta service small. The host and identity are [0008](adr/0008-cloudflare-and-supabase.md): two platforms, the Worker as one origin, Supabase as Postgres and Google OAuth. The Expo web app may talk to Google and to Supabase Auth for that login. It does not write journal tables. The writer is still Hono, as in [0005](adr/0005-server-is-the-only-writer.md). The client shape is [0004](adr/0004-expo-including-web.md).
 
 ## Phase 1 operations
 
-All of these require a session except the magic-link request and the link redemption.
+All of these require a session except starting Google OAuth and completing it.
 
 | Operation | Notes |
 | --- | --- |
-| Request magic link | Sends one-time email. |
-| Redeem magic link | Creates a session. |
+| Sign in with Google | Allowlisted email only. Creates `auth.users` on first success. |
+| Confirm display name | First-open form. `PATCH /me`. Prefills the Google name. |
 | Dashboard | Caller name, net, owed, owe, and one balance per group. Computed. See [api.md](api.md). |
 | Create group | Caller becomes a member. Seeds the seven categories. |
 | Read or rotate invite link | Any member. The token is unguessable. |
@@ -117,9 +114,9 @@ A database trigger that restates the zero-sum check can wait. The transaction is
 - The invite token is the only way in. Any member can rotate it, which invalidates the previous link.
 - Phase 1 does not support leaving a group. Everyone who joins stays through the trip, including in the balances.
 
-Sessions are opaque tokens stored on the server. The native app keeps the token in the platform secure store and sends `Authorization: Bearer`. The web build uses an httpOnly, Secure cookie set by the API, and sends requests with credentials. Both hit the same `/api` routes on the Worker. Safari and the API share that origin, so the cookie does not cross a site.
+Sessions are opaque tokens stored on the server. The PWA uses an httpOnly, Secure cookie set by the API, and sends requests with credentials. The browser and the API share the Worker origin, so the cookie does not cross a site.
 
-The magic-link email is sent by Supabase Auth. Redeem is `POST /api/auth/sessions`. A GET of the link must not consume the token. Cloudflare Access is not the login.
+Sign-in is Google OAuth through Supabase Auth. An email not on `allowed_emails` never becomes `auth.users`. Completing login is `GET /api/auth/callback`, which sets the cookie. Cloudflare Access is not the login.
 
 ## Read model
 
@@ -154,17 +151,18 @@ These run against `packages/domain` and, for the transaction, against the API wi
 
 ## Client
 
-One Expo Router app. The Phase 1 screens are: sign in, dashboard, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity. The dashboard is `GET /api/dashboard`. The web build is static assets on the Worker. Android is the GitHub Actions APK.
+One Expo Router web app, installed as a PWA. The Phase 1 screens are: sign in with Google, first-open display name, dashboard, group list, group (balances and suggestion), expense list, expense form, settlement form, trip summary, activity. The dashboard is `GET /api/dashboard`. The export is static assets on the Worker, with a web app manifest so Add to Home Screen works.
 
 The expense form collects the gross, the payer, the members, the mode, and the category, then shows the domain package's lines before the save. The confirmation copy is "You get back …" or "You owe …" in rupees. The form posts `amount` as integer paise. If the network fails, the form stays open and says the save did not happen.
 
-Libraries for Phase 1 screens must work on web. A native-only module does not back a screen the iPhone users depend on. Receipt capture, SMS reading, and UPI intents are later, and each one has to earn a web fallback or an honest "Android only" label when it arrives.
+Libraries for Phase 1 screens must work on web. A native-only module does not back a Phase 1 screen. Receipt capture, SMS reading, and UPI intents are later, and each one has to earn a web fallback or wait for a native build.
 
 ## Data, in outline
 
 Enough to see the journal. Column-level detail is settled when the migration is written.
 
-- `users`, created on first successful magic-link redeem, alongside Supabase `auth.users`
+- `allowed_emails`, the sign-in gate. Seeded with the trip addresses. The Before User Created hook reads it.
+- `users`, created on first successful Google login, alongside Supabase `auth.users`. `profile_completed_at` is set by `PATCH /me`.
 - `sessions`
 - `groups`, with `currency` defaulting to `INR`
 - `memberships`

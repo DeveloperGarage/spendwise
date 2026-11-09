@@ -1,6 +1,6 @@
 # Spendwise product plan
 
-Status: planning baseline. 8 November 2026.
+Status: planning baseline. 9 November 2026.
 
 Spendwise is a mobile-first record of shared and personal spending in one place. The private beta is a shared-expense tracker a group can use for a whole trip instead of Splitwise. Personal spending, capture automation, and payments come later, on the same entries.
 
@@ -14,9 +14,9 @@ A person who pays ₹2,000 for five people, split equally, has spent ₹400 on t
 
 ## Beta
 
-One known group, one trip in India, amounts in INR, phones usually online. Android is how most of the group will use it, from an internal GitHub Actions build. Anyone on an iPhone uses the same product in Safari, from the web build that shares an origin with the API. The trip is a success when every shared expense is recorded in Spendwise and nobody opens Splitwise to keep the books.
+One known group, one trip in India, amounts in INR, phones usually online. Everyone uses the same Expo web PWA from the Worker origin, in a browser or added to the home screen. The trip is a success when every shared expense is recorded in Spendwise and nobody opens Splitwise to keep the books.
 
-Sign-in is invite-only, by email magic link. There is no public signup. The host and the mailer are [0008](adr/0008-cloudflare-and-supabase.md).
+Sign-in is invite-only: Google OAuth for emails on the allowlist. There is no public signup. The host and identity are [0008](adr/0008-cloudflare-and-supabase.md).
 
 ## One entry, three effects
 
@@ -38,7 +38,7 @@ The add screen is the same action for a personal expense and a group expense. In
 
 A group can leave Splitwise for this trip.
 
-- Email magic link. Groups. An invite link.
+- Google sign-in for allowlisted emails. First-open display name. Groups. An invite link. The client is a PWA on any device.
 - Add, edit, and void an expense. Any member can correct an entry. Void keeps the row and drops it from the balances. An activity list shows who changed what.
 - Split equally, by exact amounts, by percentage, or by shares. One payer per expense.
 - Flat categories the group can rename and extend: Food, Stay, Transport, Activities, Shopping, Groceries, Other.
@@ -76,17 +76,17 @@ A payment gateway that collects money into Spendwise is a regulated step. It wai
 
 ## Phase 1 is done when
 
-The group can record every shared trip expense, see who owes whom, and record settlements, on Android and in mobile Safari.
+The group can record every shared trip expense, see who owes whom, and record settlements, from the PWA on a phone or a laptop.
 
 - After every save, the members' balances sum to zero.
 - An equal split sums to the exact total in paise.
 - An exact split that does not add up is refused, and the screen shows the gap.
 - A settlement changes balances and has no category.
-- An iPhone user in Safari can join, add an expense, read the balance, and record a settlement.
+- A person on any device can join, add an expense, read the balance, and record a settlement.
 
 ## Out of the beta
 
-Offline entry. More than one currency. More than one payer on a single expense. Receipt photos. Comment threads. Charts beyond the trip summary. Personal accounts, income, budgets, and repeating transactions. Payments. Leaving a group mid-trip. Public signup.
+Offline entry. Native Android or iOS apps. More than one currency. More than one payer on a single expense. Receipt photos. Comment threads. Charts beyond the trip summary. Personal accounts, income, budgets, and repeating transactions. Payments. Leaving a group mid-trip. Public signup.
 
 ## Standard tracker features, by the phase that adds them
 
