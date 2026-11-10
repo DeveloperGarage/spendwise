@@ -1,5 +1,3 @@
-import '@/global.css';
-
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import * as SplashScreen from 'expo-splash-screen';
