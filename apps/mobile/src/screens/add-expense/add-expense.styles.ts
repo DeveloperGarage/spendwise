@@ -12,11 +12,6 @@ import {
 
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    safeArea: {
-      flex: 1,
-      alignItems: 'center',
-      backgroundColor: theme.background,
-    },
     container: {
       flex: 1,
       width: '100%',

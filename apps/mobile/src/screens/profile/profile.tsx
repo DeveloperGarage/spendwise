@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ActivityIndicator, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter, type Href } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -12,6 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { patchMe, type Me } from '@/lib/api';
 import { useMe } from '@/lib/session';
 import { createStyles } from './profile.styles';
+import {SafeArea} from "@/elements/safe-area";
 
 const schema = z.object({
   displayName: z.string().trim().min(1, 'Enter a name').max(80),
@@ -59,7 +59,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeArea>
       <View style={styles.card}>
         <Text style={styles.title}>What should we call you?</Text>
         <Text style={styles.subtitle}>
@@ -96,6 +96,6 @@ export default function ProfileScreen() {
           }}
         />
       </View>
-    </SafeAreaView>
+    </SafeArea>
   );
 }

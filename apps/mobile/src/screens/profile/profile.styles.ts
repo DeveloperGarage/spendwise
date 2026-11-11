@@ -10,11 +10,6 @@ export const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.background,
     },
-    safe: {
-      flex: 1,
-      alignItems: 'center',
-      backgroundColor: theme.background,
-    },
     card: {
       width: '100%',
       maxWidth: Sizes.contentMaxWidth,

@@ -1,7 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter, type Href } from 'expo-router';
 
 import { Button } from '@/components/button';
@@ -11,6 +10,7 @@ import { formatRupees } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
 import {GroupList} from "@/components/group-list";
+import {SafeArea} from "@/elements/safe-area";
 
 
 
@@ -44,7 +44,7 @@ export function DashboardScreen() {
   const onSeeAll = () => { /* TODO: navigate to the full groups list */ };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeArea>
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -86,6 +86,6 @@ export function DashboardScreen() {
           <Button label="+ Add expense" onPress={onAddExpense} />
         </View>
       </View>
-    </SafeAreaView>
+    </SafeArea>
   );
 }

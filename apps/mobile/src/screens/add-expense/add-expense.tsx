@@ -9,6 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatRupees, groupIndian } from '@/lib/money';
 import { splitEqually } from '@/lib/split';
 import { createStyles } from './add-expense.styles';
+import {SafeArea} from "@/elements/safe-area";
 
 type SplitMode = 'equally' | 'exact' | 'percent';
 
@@ -70,7 +71,7 @@ export function AddExpenseScreen() {
   const onSave = () => { /* TODO: persist the expense, then return to the dashboard */ };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeArea>
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -188,6 +189,6 @@ export function AddExpenseScreen() {
           <Button label="Save Expense" onPress={onSave} />
         </View>
       </View>
-    </SafeAreaView>
+    </SafeArea>
   );
 }

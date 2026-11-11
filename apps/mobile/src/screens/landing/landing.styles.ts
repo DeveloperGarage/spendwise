@@ -17,12 +17,6 @@ export const createStyles = (theme: Theme) =>
     },
 
     // ----- Mobile (stacked card) -----
-    safeArea: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: theme.background,
-    },
     card: {
       flex: 1,
       width: '100%',
