@@ -12,9 +12,9 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { createStyles } from './button.styles';
 
-export type ButtonVariant = 'primary' | 'secondary';
+type ButtonVariant = 'primary' | 'secondary';
 
-export type ButtonProps = Omit<PressableProps, 'style'> & {
+type ButtonProps = Omit<PressableProps, 'style'> & {
   /** The button text — the "Label" configuration from the Figma component. */
   label: string;
   /** Visual style. `primary` is the brand CTA; `secondary` is an outlined surface button (e.g. OAuth). */

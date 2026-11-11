@@ -2,27 +2,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, type Href } from 'expo-router';
+import { Redirect, useRouter, type Href } from 'expo-router';
 
 import { Button } from '@/components/button';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
+import { formatRupees } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
-
-/** Groups the balance digits using the Indian numbering system (e.g. 12,34,567). */
-function groupIndian(value: number): string {
-  const digits = Math.abs(Math.trunc(value)).toString();
-  if (digits.length <= 3) return digits;
-  const last3 = digits.slice(-3);
-  const rest = digits.slice(0, -3);
-  return `${rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${last3}`;
-}
-
-/** Formats a rupee amount as "₹ 1,560" (sign handled separately by the caller). */
-function formatRupees(value: number): string {
-  return `₹ ${groupIndian(value)}`;
-}
+import { TextButton } from '@/components/text-button';
 
 type Group = {
   id: string;
@@ -42,10 +30,11 @@ const GROUPS: Group[] = [
   { id: 'lunch', name: 'Lunch Club', members: 6, balance: 90 },
 ];
 
-export default function DashboardScreen() {
+export function DashboardScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const me = useMe();
+  const router = useRouter();
   const net = NET_OWED - NET_OWE;
 
   if (me.isPending) {
@@ -62,7 +51,7 @@ export default function DashboardScreen() {
     return <Redirect href={'/profile' as Href} />;
   }
 
-  const onAddExpense = () => { /* TODO: open the add-expense flow */ };
+  const onAddExpense = () => router.push('/add-expense' as Href);
   const onSeeAll = () => { /* TODO: navigate to the full groups list */ };
   const onOpenGroup = (_id: string) => { /* TODO: navigate to the group detail */ };
 
@@ -104,9 +93,7 @@ export default function DashboardScreen() {
 
           <View style={styles.groupsHeader}>
             <Text style={styles.groupsTitle}>Your groups</Text>
-            <Pressable onPress={onSeeAll} accessibilityRole="link">
-              <Text style={styles.seeAll}>See all</Text>
-            </Pressable>
+            <TextButton onPress={onSeeAll} text="See all"/>
           </View>
 
           <View style={styles.groupList}>

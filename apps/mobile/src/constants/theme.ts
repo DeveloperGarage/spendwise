@@ -19,6 +19,7 @@ export const Colors = {
     positive: '#15994F',
     negative: '#E5484D',
     avatarSurface: '#E9EEFB',
+    accentSurface: '#ECEAFB',
   },
   dark: {
     text: '#F3F2FB',
@@ -33,6 +34,7 @@ export const Colors = {
     positive: '#4ADE80',
     negative: '#FF6369',
     avatarSurface: '#2A2747',
+    accentSurface: '#262245',
   },
 } as const;
 
@@ -87,6 +89,7 @@ export const Spacing = {
 } as const;
 
 export const Radius = {
+  sm: 6,
   md: 12,
   lg: 16,
   xl: 20,
@@ -96,6 +99,7 @@ export const Radius = {
 export const Sizes = {
   avatarSm: 40,
   avatarMd: 44,
+  checkbox: 22,
   buttonHeight: 56,
   contentMaxWidth: 440,
 } as const;

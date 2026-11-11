@@ -1,1 +1,1 @@
-export { default } from '@/screens/dashboard/dashboard';
+export {DashboardScreen as default} from '@/screens/dashboard/dashboard'
