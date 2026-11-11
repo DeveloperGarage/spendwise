@@ -40,6 +40,22 @@ npm start         # interactive: pick a target, show QR for Expo Go
 > The libraries in this project (TanStack Query, Zustand, RHF, Zod) are
 > JS-only, so Expo Go and the web build work as-is.
 
+### Mock mode (MSW, web only)
+
+Run the app without the API or a database:
+
+```bash
+npm run web:mock
+```
+
+(Shorthand for `EXPO_PUBLIC_USE_MOCKS=true expo start --web`.)
+
+- Handlers live in `mocks/` (outside `src/`). `index.js` starts the worker before
+  loading `expo-router/entry`, so app code is untouched.
+- Guarded by `__DEV__`, so mocks and `msw` are never in production bundles.
+- You start signed in. The session is stored in localStorage under
+  `spendwise.mock.session`; delete it to reset.
+
 ## Testing, lint, typecheck
 
 ```bash

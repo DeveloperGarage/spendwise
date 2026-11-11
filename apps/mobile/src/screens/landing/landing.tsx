@@ -19,7 +19,7 @@ export default function LandingScreen() {
   const { isWide } = useBreakpoint();
   const me = useMe();
 
-  const onGoogle = () => navigation.navigate('/dashboard');
+  const onGoogle = () => startGoogleSignIn();
 
   if (me.isPending) {
     return (
