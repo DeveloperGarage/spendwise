@@ -38,6 +38,17 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/** A resolved color palette (light or dark) as returned by `useTheme`. */
+export type Theme = (typeof Colors)[keyof typeof Colors];
+
+/** Colors that stay the same in light and dark mode (e.g. text on the brand gradient). */
+export const StaticColors = {
+  white: '#FFFFFF',
+  onBrandMuted: 'rgba(255,255,255,0.8)',
+  onBrandBorder: 'rgba(255,255,255,0.35)',
+  brandGradient: ['#6C5CE7', '#8B7CF6'] as const,
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
@@ -64,13 +75,49 @@ export const Fonts = Platform.select({
 });
 
 export const Spacing = {
-  half: 2,
-  one: 4,
-  two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  xxs: 2,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+  huge: 48,
+} as const;
+
+export const Radius = {
+  md: 12,
+  lg: 16,
+  xl: 20,
+  full: 999,
+} as const;
+
+export const Sizes = {
+  avatarSm: 40,
+  avatarMd: 44,
+  buttonHeight: 56,
+  contentMaxWidth: 440,
+} as const;
+
+export const Opacity = {
+  pressed: 0.7,
+  pressedSubtle: 0.85,
+  disabled: 0.5,
+} as const;
+
+export const Typography = {
+  display: { fontSize: 34, lineHeight: 42, fontWeight: 700 },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: 700 },
+  heading: { fontSize: 22, lineHeight: 28, fontWeight: 700 },
+  subheading: { fontSize: 17, lineHeight: 22, fontWeight: 700 },
+  button: { fontSize: 17, lineHeight: 22, fontWeight: 700 },
+  bodyStrong: { fontSize: 15, lineHeight: 20, fontWeight: 700 },
+  body: { fontSize: 14, lineHeight: 20, fontWeight: 500 },
+  link: { fontSize: 14, lineHeight: 20, fontWeight: 600 },
+  caption: { fontSize: 13, lineHeight: 18, fontWeight: 500 },
+  small: { fontSize: 12, lineHeight: 16, fontWeight: 500 },
+  overline: { fontSize: 12, lineHeight: 16, fontWeight: 700, letterSpacing: 0.8 },
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

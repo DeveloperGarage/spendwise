@@ -213,4 +213,30 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
       await sql.end({ timeout: 5 });
     }
   });
+
+  it("signs in through GET /auth/dev-login only when the bypass flag is on", async () => {
+    const { db, sql } = createDb(DATABASE_URL);
+    const email = `dev.${randomUUID()}@gmail.com`;
+    try {
+      await migrateJournal(db);
+      await db.insert(allowedEmails).values({ email });
+
+      const off = createApp(db, { cookieSecure: false, devAuthBypass: false });
+      const blocked = await off.request(`/auth/dev-login?email=${encodeURIComponent(email)}`);
+      assert.equal(blocked.status, 404);
+
+      const on = createApp(db, {
+        cookieSecure: false,
+        appOrigin: "http://localhost:8081",
+        devAuthBypass: true,
+      });
+      const res = await on.request(`/auth/dev-login?email=${encodeURIComponent(email)}`);
+      assert.equal(res.status, 302);
+      assert.ok(res.headers.get("location")?.startsWith("http://localhost:8081/"));
+      const me = await on.request("/me", { headers: { cookie: cookieHeader(res) } });
+      assert.equal(me.status, 200);
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  });
 });

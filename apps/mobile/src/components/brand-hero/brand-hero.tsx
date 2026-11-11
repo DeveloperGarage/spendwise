@@ -1,7 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { BRAND_GRADIENT, LogoBadge } from '@/components/logo-badge';
+
+import { styles } from './brand-hero.styles';
 
 /**
  * The branded gradient hero (logo mark + "Spendwise" wordmark) shown on the
@@ -19,20 +21,3 @@ export function BrandHero() {
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  hero: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 48,
-    padding: 48,
-  },
-  wordmark: {
-    color: '#FFFFFF',
-    fontSize: 40,
-    lineHeight: 46,
-    fontWeight: 700,
-    letterSpacing: 0.2,
-  },
-});

@@ -98,6 +98,21 @@ export function createApp(db: Database, authOptions: AuthOptions = {}) {
     }
   });
 
+  if (auth.devAuthBypass) {
+    app.get("/auth/dev-login", async (c) => {
+      const email = c.req.query("email")?.trim();
+      if (!email) {
+        return c.json(
+          errorBody("VALIDATION_FAILED", "The email is missing.", c.get("requestId"), { field: "email" }),
+          422,
+        );
+      }
+      const result = await completeLogin(c, db, auth, { email, displayName: "" });
+      if (!result.ok) return result.response;
+      return c.redirect(`${auth.appOrigin}${afterLoginPath(result.user.profileCompleted)}`, 302);
+    });
+  }
+
   app.post("/auth/sessions", async (c) => {
     let body: { provider?: string; idToken?: string };
     try {

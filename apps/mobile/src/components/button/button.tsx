@@ -1,8 +1,7 @@
-import { type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
   View,
   type PressableProps,
@@ -11,6 +10,7 @@ import {
 } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
+import { createStyles } from './button.styles';
 
 export type ButtonVariant = 'primary' | 'secondary';
 
@@ -41,10 +41,10 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const isDisabled = disabled || loading;
   const isSecondary = variant === 'secondary';
-  const backgroundColor = isSecondary ? theme.surface : theme.primary;
-  const textColor = isSecondary ? theme.text : theme.primaryText;
+  const labelStyle = isSecondary ? styles.labelSecondary : styles.labelPrimary;
 
   return (
     <Pressable
@@ -53,8 +53,7 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
-        { backgroundColor },
-        isSecondary && { borderWidth: 1, borderColor: theme.border },
+        isSecondary ? styles.secondary : styles.primary,
         pressed && styles.pressed,
         isDisabled && styles.disabled,
         style,
@@ -62,11 +61,11 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <ActivityIndicator color={labelStyle.color} />
       ) : (
         <View style={styles.content}>
           {icon}
-          <Text style={[styles.label, { color: textColor }]} numberOfLines={1}>
+          <Text style={[styles.label, labelStyle]} numberOfLines={1}>
             {label}
           </Text>
         </View>
@@ -74,31 +73,3 @@ export function Button({
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    minHeight: 56,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  label: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: 700,
-  },
-});

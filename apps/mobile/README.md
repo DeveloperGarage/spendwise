@@ -6,7 +6,7 @@ In production the web export is static assets on the same Cloudflare Worker as t
 ([`../../docs/adr/0008-cloudflare-and-supabase.md`](../../docs/adr/0008-cloudflare-and-supabase.md)). There is no Phase 1 APK or TestFlight build.
 
 Stack and rationale: [`../../docs/adr/0007-frontend-stack.md`](../../docs/adr/0007-frontend-stack.md).
-Expo Router, NativeWind, TanStack Query, Zustand, React Hook Form + Zod, Jest.
+Expo Router, React Native `StyleSheet` + design tokens, TanStack Query, Zustand, React Hook Form + Zod, Jest.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ npm start         # interactive: pick a target, show QR for Expo Go
 
 > After adding any library with native code, Expo Go is no longer enough — build a dev
 > client with `npx expo run:android` / `npx expo run:ios` or `eas build --profile development`.
-> The libraries in this project (NativeWind, TanStack Query, Zustand, RHF, Zod) are
+> The libraries in this project (TanStack Query, Zustand, RHF, Zod) are
 > JS-only, so Expo Go and the web build work as-is.
 
 ## Testing, lint, typecheck
@@ -59,15 +59,46 @@ dev server. Fix the root cause with `brew reinstall watchman` when convenient.
 ## Project layout
 
 ```
-src/app/          Expo Router screens; every file is a route, _layout.tsx defines navigators
-src/components/    Reusable UI (keep out of src/app/)
-src/lib/           Non-UI helpers, e.g. the TanStack Query client
-src/stores/        Zustand stores — UI-only state, never server data
-src/global.css     Tailwind/NativeWind entry (directives + CSS vars)
+src/app/                Expo Router routes; thin files that re-export a screen.
+                        _layout.tsx sets up the Stack navigator and providers
+src/screens/<screen>/   Screen component + sibling <screen>.styles.ts
+src/components/<name>/  Reusable UI: component + <name>.styles.ts + index.ts barrel
+src/constants/theme.ts  Design tokens: Colors (light/dark), Spacing, Radius, Sizes,
+                        Opacity, Typography, Fonts
+src/hooks/              useTheme, useColorScheme, useBreakpoint
+src/lib/                Non-UI helpers, e.g. the TanStack Query client, API, session
+src/stores/             Zustand stores — UI-only state, never server data
 ```
 
-Config files: `babel.config.js`, `metro.config.js` (NativeWind), `tailwind.config.js`,
-`jest.config.js` (`jest-expo` preset), `app.json` (Expo config).
+Routes must stay in `src/app/` (Expo Router resolves URLs from that tree), but keep them
+to a one-line re-export, e.g. `export { default } from '@/screens/dashboard/dashboard';`.
+Screen logic and UI live in `src/screens/`.
+
+Config files: `app.json` (Expo config), `jest.config.js` (`jest-expo` preset),
+`eslint.config.js`, `tsconfig.json` (`@/*` → `./src/*`).
+
+## Styling conventions
+
+- Use `StyleSheet` with values from `src/constants/theme.ts`. Don't hard-code colours,
+  spacing, radii or font sizes in components.
+- Put styles in a sibling `*.styles.ts` that exports a theme-aware factory:
+
+  ```ts
+  export const createStyles = (theme: Theme) =>
+    StyleSheet.create({ container: { backgroundColor: theme.background, padding: Spacing.lg } });
+  ```
+
+- In the component, read the active palette and memoise the styles:
+
+  ```tsx
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  ```
+
+  `useTheme` returns `Colors.light` or `Colors.dark` depending on the system colour
+  scheme, so dark mode works without per-component checks.
+- For nested rounded shapes, set inner radius = outer radius − padding so the corners
+  stay concentric.
 
 Native folders `ios/` and `android/` are generated (Continuous Native Generation) — do
 not create or edit them by hand; configure native behaviour in `app.json`.
@@ -79,6 +110,6 @@ A clean checkout should pass all three:
 ```bash
 npm install
 npx jest --watchman=false   # placeholder test green
-npx expo export -p web      # Metro + NativeWind build succeeds
+npx expo export -p web      # Metro web build succeeds
 npm run web                 # serves http://localhost:8081
 ```

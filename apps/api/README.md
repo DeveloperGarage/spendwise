@@ -25,6 +25,16 @@ Paste [`drizzle/supabase_before_user_created.sql`](drizzle/supabase_before_user_
 
 Expo web (`http://localhost:8081`) calls this API with credentials. `Continue with Google` goes to `GET /auth/google`.
 
+## Dev sign-in bypass (local only)
+
+Use this to skip Google during development. Set `DEV_AUTH_BYPASS=true` in `apps/api/.env`, then open:
+
+```
+http://localhost:3000/auth/dev-login?email=you@gmail.com
+```
+
+The email must still be in `allowed_emails`. The route sets the session cookie and redirects to the app, the same way the Google callback does. It is not registered when the flag is off or when `NODE_ENV=production`.
+
 After changing `src/db/schema.ts`, generate a named SQL file (drizzle-kit otherwise picks a random label):
 
 ```bash

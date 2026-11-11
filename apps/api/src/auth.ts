@@ -28,6 +28,7 @@ export type AuthConfig = {
   supabaseUrl: string;
   supabaseAnonKey: string;
   cookieSecure: boolean;
+  devAuthBypass: boolean;
   exchangeGoogle: (input: ExchangeGoogleInput) => Promise<GoogleIdentity>;
 };
 
@@ -51,6 +52,10 @@ export function authFromEnv(overrides: AuthOptions = {}): AuthConfig {
     supabaseUrl,
     supabaseAnonKey,
     cookieSecure: overrides.cookieSecure ?? process.env.COOKIE_SECURE === "true",
+    // Never allow the dev login bypass in production, even if the flag is set.
+    devAuthBypass:
+      overrides.devAuthBypass ??
+      (process.env.DEV_AUTH_BYPASS === "true" && process.env.NODE_ENV !== "production"),
     exchangeGoogle:
       overrides.exchangeGoogle ??
       ((input) => exchangeWithSupabase(supabaseUrl, supabaseAnonKey, input)),
