@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { patchMe, type Me } from '@/lib/api';
 import { useMe } from '@/lib/session';
 import { createStyles } from './profile.styles';
-import {SafeArea} from "@/elements/safe-area";
+import {SafeArea} from "@/custom-elements";
 
 const schema = z.object({
   displayName: z.string().trim().min(1, 'Enter a name').max(80),

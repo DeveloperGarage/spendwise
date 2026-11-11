@@ -12,11 +12,6 @@ import {
 
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      maxWidth: Sizes.contentMaxWidth,
-    },
     scrollContent: {
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.md,

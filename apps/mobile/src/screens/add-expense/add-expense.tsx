@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { Button } from '@/components/button';
@@ -9,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatRupees, groupIndian } from '@/lib/money';
 import { splitEqually } from '@/lib/split';
 import { createStyles } from './add-expense.styles';
-import {SafeArea} from "@/elements/safe-area";
+import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
 
 type SplitMode = 'equally' | 'exact' | 'percent';
 
@@ -72,12 +71,12 @@ export function AddExpenseScreen() {
 
   return (
     <SafeArea>
-      <View style={styles.container}>
+      <ScreenContainer>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
+          <PageHeader>
             <Pressable
               onPress={onCancel}
               accessibilityRole="button"
@@ -87,7 +86,7 @@ export function AddExpenseScreen() {
               <Text style={styles.headerTitle}>Add expense</Text>
             </Pressable>
             <TextButton onPress={onCancel} text="Cancel" />
-          </View>
+          </PageHeader>
 
           <View style={styles.amountCard}>
             <Text style={styles.amountLabel}>AMOUNT</Text>
@@ -188,7 +187,7 @@ export function AddExpenseScreen() {
         <View style={styles.footer}>
           <Button label="Save Expense" onPress={onSave} />
         </View>
-      </View>
+      </ScreenContainer>
     </SafeArea>
   );
 }

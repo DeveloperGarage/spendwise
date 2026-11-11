@@ -18,11 +18,6 @@ export const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.background,
     },
-    container: {
-      flex: 1,
-      width: '100%',
-      maxWidth: Sizes.contentMaxWidth,
-    },
     scrollContent: {
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.md,

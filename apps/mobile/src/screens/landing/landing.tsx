@@ -12,7 +12,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { startGoogleSignIn } from '@/lib/api';
 import { useMe } from '@/lib/session';
 import { createStyles } from './landing.styles';
-import {SafeArea} from "@/elements/safe-area";
+import {SafeArea} from "@/custom-elements/safe-area";
 
 export default function LandingScreen() {
   const theme = useTheme();

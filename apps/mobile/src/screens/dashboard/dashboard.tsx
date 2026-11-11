@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
 
 import { Button } from '@/components/button';
@@ -10,7 +10,7 @@ import { formatRupees } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
 import {GroupList} from "@/components/group-list";
-import {SafeArea} from "@/elements/safe-area";
+import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
 
 
 
@@ -45,17 +45,17 @@ export function DashboardScreen() {
 
   return (
     <SafeArea>
-      <View style={styles.container}>
+      <ScreenContainer>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
+          <PageHeader>
             <View style={styles.headerText}>
               <Text style={styles.greeting}>{GREETING}</Text>
               <Text style={styles.name}>{me.data.displayName}</Text>
             </View>
             <View style={styles.avatar} />
-          </View>
+          </PageHeader>
 
           <LinearGradient
             colors={BRAND_GRADIENT}
@@ -85,7 +85,7 @@ export function DashboardScreen() {
         <View style={styles.footer}>
           <Button label="+ Add expense" onPress={onAddExpense} />
         </View>
-      </View>
+      </ScreenContainer>
     </SafeArea>
   );
 }
