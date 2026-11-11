@@ -10,25 +10,14 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatRupees } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
-import { TextButton } from '@/components/text-button';
+import {GroupList} from "@/components/group-list";
 
-type Group = {
-  id: string;
-  name: string;
-  members: number;
-  /** Positive = you are owed; negative = you owe. In rupees. */
-  balance: number;
-};
+
 
 const GREETING = 'Good evening';
 const NET_OWED = 2210;
 const NET_OWE = 650;
 
-const GROUPS: Group[] = [
-  { id: 'goa', name: 'Goa Trip', members: 4, balance: 1560 },
-  { id: 'flat', name: 'Flat 203', members: 3, balance: -420 },
-  { id: 'lunch', name: 'Lunch Club', members: 6, balance: 90 },
-];
 
 export function DashboardScreen() {
   const theme = useTheme();
@@ -53,7 +42,6 @@ export function DashboardScreen() {
 
   const onAddExpense = () => router.push('/add-expense' as Href);
   const onSeeAll = () => { /* TODO: navigate to the full groups list */ };
-  const onOpenGroup = (_id: string) => { /* TODO: navigate to the group detail */ };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -91,43 +79,7 @@ export function DashboardScreen() {
             </View>
           </LinearGradient>
 
-          <View style={styles.groupsHeader}>
-            <Text style={styles.groupsTitle}>Your groups</Text>
-            <TextButton onPress={onSeeAll} text="See all"/>
-          </View>
-
-          <View style={styles.groupList}>
-            {GROUPS.map((group) => {
-              const owed = group.balance >= 0;
-              return (
-                <Pressable
-                  key={group.id}
-                  onPress={() => onOpenGroup(group.id)}
-                  accessibilityRole="button"
-                  style={({ pressed }) => [styles.groupCard, pressed && styles.pressed]}>
-                  <View style={styles.groupAvatar}>
-                    <Text style={styles.groupAvatarText}>
-                      {group.name.charAt(0)}
-                    </Text>
-                  </View>
-                  <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.name}</Text>
-                    <Text style={styles.groupMembers}>
-                      {group.members} people
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.groupAmount,
-                      owed ? styles.groupAmountPositive : styles.groupAmountNegative,
-                    ]}>
-                    {owed ? '+ ' : '− '}
-                    {formatRupees(group.balance)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <GroupList userId={'user5'} onSeeAll={onSeeAll} />
         </ScrollView>
 
         <View style={styles.footer}>
