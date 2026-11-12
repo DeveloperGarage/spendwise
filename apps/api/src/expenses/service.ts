@@ -24,7 +24,7 @@ import {
 import { amountToJson } from "../money.ts";
 import { isGroupMember } from "../groups/service.ts";
 import { memberIdsForGroup } from "../groups/journal.ts";
-import type { ParsedCreateExpense } from "./parse-body.ts";
+import type { ParsedCreateExpense, ParsedReplaceExpense } from "./parse-body.ts";
 
 export type ExpenseListItemJson = {
   id: string;
@@ -40,6 +40,12 @@ export type ExpenseListItemJson = {
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
+
+class ReplaceBlockedError extends Error {
+  constructor(readonly reason: "voided" | "version_conflict") {
+    super(reason);
+  }
+}
 
 function memberIdsFromSplit(input: SplitInput): string[] {
   switch (input.mode) {
@@ -391,4 +397,331 @@ export async function listExpenses(
       : null;
 
   return { ok: true, expenses: items, nextCursor };
+}
+
+export type ExpenseDetailJson = {
+  id: string;
+  version: number;
+  voided: boolean;
+  note: string;
+  occurredOn: string;
+  categoryId: string;
+  amount: number;
+  split: SplitInput;
+  fundingLines: { memberId: string; amount: number }[];
+  allocationLines: { memberId: string; amount: number }[];
+};
+
+function splitWireFromStored(
+  splitMode: string,
+  allocationRows: { memberId: string; amountPaise: number }[],
+  grossPaise: number,
+): SplitInput {
+  if (splitMode === "equal") {
+    return { mode: "equal", memberIds: allocationRows.map((row) => row.memberId) };
+  }
+  if (splitMode === "exact") {
+    return {
+      mode: "exact",
+      amounts: allocationRows.map((row) => ({
+        memberId: row.memberId,
+        amount: row.amountPaise,
+      })),
+    };
+  }
+  if (splitMode === "percentage") {
+    return {
+      mode: "percentage",
+      percentages: allocationRows.map((row) => ({
+        memberId: row.memberId,
+        hundredths: Math.round((row.amountPaise / grossPaise) * 10000),
+      })),
+    };
+  }
+  return {
+    mode: "shares",
+    shares: allocationRows.map((row) => ({
+      memberId: row.memberId,
+      weight: row.amountPaise,
+    })),
+  };
+}
+
+async function loadExpenseDetailJson(
+  db: Database,
+  row: typeof expenses.$inferSelect,
+): Promise<ExpenseDetailJson | null> {
+  const fundingRows = await db
+    .select()
+    .from(expenseFundingLines)
+    .where(eq(expenseFundingLines.expenseId, row.id));
+  const allocationRows = await db
+    .select()
+    .from(expenseAllocationLines)
+    .where(eq(expenseAllocationLines.expenseId, row.id));
+  if (fundingRows.length === 0) return null;
+
+  return {
+    id: row.id,
+    version: row.version,
+    voided: row.voidedAt !== null,
+    note: row.note,
+    occurredOn: String(row.occurredOn),
+    categoryId: row.categoryId,
+    amount: amountToJson(row.grossPaise),
+    split: splitWireFromStored(row.splitMode, allocationRows, row.grossPaise),
+    fundingLines: fundingRows.map((line) => ({
+      memberId: line.memberId,
+      amount: amountToJson(line.amountPaise),
+    })),
+    allocationLines: allocationRows.map((line) => ({
+      memberId: line.memberId,
+      amount: amountToJson(line.amountPaise),
+    })),
+  };
+}
+
+async function assertGroupBalancesZero(db: Database, groupId: string, memberIdList: string[]) {
+  const journalBalances = computeBalances(
+    memberIdList,
+    await loadExpenseInputsForGroup(db, groupId),
+    await loadSettlementInputsForGroup(db, groupId),
+  );
+  if (!assertZeroSum(journalBalances)) {
+    throw new Error("group balances do not sum to zero");
+  }
+}
+
+type WriteValidation =
+  | { ok: true; splitResult: Extract<ReturnType<typeof split>, { ok: true }>; splitMode: string }
+  | { ok: false; kind: "field"; field: string }
+  | { ok: false; kind: "split_refused"; gap: number };
+
+async function validateExpenseWrite(
+  db: Database,
+  groupId: string,
+  parsed: ParsedCreateExpense,
+): Promise<WriteValidation> {
+  const memberIds = new Set(await memberIdsForGroup(db, groupId));
+  const splitMembers = memberIdsFromSplit(parsed.split);
+  const allReferenced = new Set([parsed.fundingMemberId, ...splitMembers]);
+  for (const id of allReferenced) {
+    if (!memberIds.has(id)) {
+      return { ok: false, kind: "field", field: "split" };
+    }
+  }
+
+  const [category] = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(and(eq(categories.id, parsed.categoryId), eq(categories.groupId, groupId)));
+  if (!category) {
+    return { ok: false, kind: "field", field: "categoryId" };
+  }
+
+  const splitResult = split(parsed.amount, parsed.split);
+  if (!splitResult.ok) {
+    return { ok: false, kind: "split_refused", gap: splitResult.gap };
+  }
+
+  return { ok: true, splitResult, splitMode: parsed.split.mode };
+}
+
+export type GetExpenseResult =
+  | { ok: true; expense: ExpenseDetailJson }
+  | { ok: false; kind: "not_found" };
+
+export async function getExpenseDetail(
+  db: Database,
+  groupId: string,
+  expenseId: string,
+  callerId: string,
+): Promise<GetExpenseResult> {
+  if (!(await isGroupMember(db, groupId, callerId))) {
+    return { ok: false, kind: "not_found" };
+  }
+  const [row] = await db
+    .select()
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
+  if (!row) return { ok: false, kind: "not_found" };
+  const expense = await loadExpenseDetailJson(db, row);
+  if (!expense) return { ok: false, kind: "not_found" };
+  return { ok: true, expense };
+}
+
+export type ReplaceExpenseResult =
+  | { ok: true; expense: ExpenseDetailJson }
+  | { ok: false; kind: "not_found" }
+  | { ok: false; kind: "voided" }
+  | { ok: false; kind: "version_conflict" }
+  | { ok: false; kind: "field"; field: string }
+  | { ok: false; kind: "split_refused"; gap: number };
+
+export async function replaceExpense(
+  db: Database,
+  groupId: string,
+  expenseId: string,
+  callerId: string,
+  parsed: ParsedReplaceExpense,
+): Promise<ReplaceExpenseResult> {
+  if (!(await isGroupMember(db, groupId, callerId))) {
+    return { ok: false, kind: "not_found" };
+  }
+  const [row] = await db
+    .select()
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
+  if (!row) return { ok: false, kind: "not_found" };
+  if (row.voidedAt !== null) return { ok: false, kind: "voided" };
+  if (row.version !== parsed.version) return { ok: false, kind: "version_conflict" };
+
+  const validation = await validateExpenseWrite(db, groupId, parsed);
+  if (!validation.ok) {
+    if (validation.kind === "field") return { ok: false, kind: "field", field: validation.field };
+    return { ok: false, kind: "split_refused", gap: validation.gap };
+  }
+
+  const { splitResult, splitMode } = validation;
+  const memberIdList = await memberIdsForGroup(db, groupId);
+  const nextVersion = row.version + 1;
+
+  try {
+    await db.transaction(async (tx) => {
+      const [current] = await tx
+        .select()
+        .from(expenses)
+        .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
+      if (!current || current.voidedAt !== null) {
+        throw new ReplaceBlockedError("voided");
+      }
+      if (current.version !== parsed.version) {
+        throw new ReplaceBlockedError("version_conflict");
+      }
+
+    await tx
+      .update(expenses)
+      .set({
+        note: parsed.note,
+        occurredOn: parsed.occurredOn,
+        categoryId: parsed.categoryId,
+        grossPaise: parsed.amount,
+        splitMode,
+        version: nextVersion,
+      })
+      .where(eq(expenses.id, expenseId));
+
+    await tx.delete(expenseFundingLines).where(eq(expenseFundingLines.expenseId, expenseId));
+    await tx.delete(expenseAllocationLines).where(eq(expenseAllocationLines.expenseId, expenseId));
+
+    await tx.insert(expenseFundingLines).values({
+      id: `f_${randomBytes(8).toString("hex")}`,
+      expenseId,
+      memberId: parsed.fundingMemberId,
+      amountPaise: parsed.amount,
+    });
+
+    for (const line of splitResult.lines) {
+      await tx.insert(expenseAllocationLines).values({
+        id: `a_${randomBytes(8).toString("hex")}`,
+        expenseId,
+        memberId: line.memberId,
+        amountPaise: line.amount,
+        categoryId: parsed.categoryId,
+      });
+    }
+
+    await assertGroupBalancesZero(tx as unknown as Database, groupId, memberIdList);
+
+    await tx.insert(activity).values({
+      id: `act_${randomBytes(8).toString("hex")}`,
+      groupId,
+      actorId: callerId,
+      kind: "expense",
+      action: "edited",
+      subjectId: expenseId,
+      snapshot: {
+        note: parsed.note,
+        occurredOn: parsed.occurredOn,
+        categoryId: parsed.categoryId,
+        amount: parsed.amount,
+        splitMode,
+        version: nextVersion,
+      },
+    });
+    });
+  } catch (error) {
+    if (error instanceof ReplaceBlockedError) {
+      if (error.reason === "voided") return { ok: false, kind: "voided" };
+      return { ok: false, kind: "version_conflict" };
+    }
+    throw error;
+  }
+
+  const [updated] = await db
+    .select()
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
+  if (!updated) throw new Error("expense missing after replace");
+  const expense = await loadExpenseDetailJson(db, updated);
+  if (!expense) throw new Error("expense detail missing after replace");
+  return { ok: true, expense };
+}
+
+export type VoidExpenseResult =
+  | { ok: true; expense: ExpenseListItemJson }
+  | { ok: false; kind: "not_found" }
+  | { ok: false; kind: "voided" };
+
+export async function voidExpense(
+  db: Database,
+  groupId: string,
+  expenseId: string,
+  callerId: string,
+): Promise<VoidExpenseResult> {
+  if (!(await isGroupMember(db, groupId, callerId))) {
+    return { ok: false, kind: "not_found" };
+  }
+  const [row] = await db
+    .select()
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
+  if (!row) return { ok: false, kind: "not_found" };
+  if (row.voidedAt !== null) return { ok: false, kind: "voided" };
+
+  const memberIdList = await memberIdsForGroup(db, groupId);
+
+  await db.transaction(async (tx) => {
+    const [current] = await tx
+      .select()
+      .from(expenses)
+      .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)));
+    if (!current || current.voidedAt !== null) return;
+
+    await tx
+      .update(expenses)
+      .set({ voidedAt: new Date() })
+      .where(eq(expenses.id, expenseId));
+
+    await assertGroupBalancesZero(tx as unknown as Database, groupId, memberIdList);
+
+    await tx.insert(activity).values({
+      id: `act_${randomBytes(8).toString("hex")}`,
+      groupId,
+      actorId: callerId,
+      kind: "expense",
+      action: "voided",
+      subjectId: expenseId,
+      snapshot: {
+        id: expenseId,
+        note: current.note,
+        amount: current.grossPaise,
+        voided: true,
+      },
+    });
+  });
+
+  const expense = await loadExpenseJson(db, expenseId, callerId);
+  if (!expense) throw new Error("expense missing after void");
+  return { ok: true, expense };
 }

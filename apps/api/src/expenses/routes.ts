@@ -6,8 +6,14 @@ import { SESSION_COOKIE, userFromSessionCookie } from "../auth.ts";
 import type { AppEnv, SessionUser } from "../app-env.ts";
 import type { Database } from "../db/client.ts";
 import { errorBody } from "../errors.ts";
-import { parseCreateExpenseBody } from "./parse-body.ts";
-import { createExpense, listExpenses } from "./service.ts";
+import { parseCreateExpenseBody, parseReplaceExpenseBody } from "./parse-body.ts";
+import {
+  createExpense,
+  getExpenseDetail,
+  listExpenses,
+  replaceExpense,
+  voidExpense,
+} from "./service.ts";
 
 async function requireSession(
   c: Context<AppEnv>,
@@ -109,6 +115,112 @@ export function registerExpenseRoutes(groups: Hono<AppEnv>, db: Database) {
         field: result.field,
       }),
       422,
+    );
+  });
+
+  groups.get("/groups/:groupId/expenses/:expenseId", async (c) => {
+    const user = await requireSession(c, db);
+    if (user instanceof Response) return user;
+    const groupId = c.req.param("groupId");
+    const expenseId = c.req.param("expenseId");
+    const result = await getExpenseDetail(db, groupId, expenseId, user.id);
+    if (!result.ok) {
+      return c.json(
+        errorBody("NOT_FOUND", "Expense not found.", c.get("requestId")),
+        404,
+      );
+    }
+    return c.json(result.expense);
+  });
+
+  groups.put("/groups/:groupId/expenses/:expenseId", async (c) => {
+    const user = await requireSession(c, db);
+    if (user instanceof Response) return user;
+
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json(
+        errorBody("VALIDATION_FAILED", "The body is wrong.", c.get("requestId"), { field: "body" }),
+        422,
+      );
+    }
+
+    const parsed = parseReplaceExpenseBody(body);
+    if ("kind" in parsed && parsed.kind === "field") {
+      return c.json(
+        errorBody("VALIDATION_FAILED", "The body is wrong.", c.get("requestId"), {
+          field: parsed.field,
+        }),
+        422,
+      );
+    }
+    if ("kind" in parsed) {
+      return c.json(
+        errorBody("VALIDATION_FAILED", "The body is wrong.", c.get("requestId"), { field: "body" }),
+        422,
+      );
+    }
+
+    const groupId = c.req.param("groupId");
+    const expenseId = c.req.param("expenseId");
+    const result = await replaceExpense(db, groupId, expenseId, user.id, parsed);
+    if (result.ok) {
+      return c.json(result.expense, 200);
+    }
+    if (result.kind === "not_found") {
+      return c.json(
+        errorBody("NOT_FOUND", "Expense not found.", c.get("requestId")),
+        404,
+      );
+    }
+    if (result.kind === "voided") {
+      return c.json(
+        errorBody("VOIDED", "The expense is already voided.", c.get("requestId")),
+        409,
+      );
+    }
+    if (result.kind === "version_conflict") {
+      return c.json(
+        errorBody("VERSION_CONFLICT", "The version is stale.", c.get("requestId")),
+        409,
+      );
+    }
+    if (result.kind === "split_refused") {
+      return c.json(
+        errorBody("SPLIT_REFUSED", "The shares do not add up.", c.get("requestId"), {
+          gap: result.gap,
+        }),
+        422,
+      );
+    }
+    return c.json(
+      errorBody("VALIDATION_FAILED", "The body is wrong.", c.get("requestId"), {
+        field: result.field,
+      }),
+      422,
+    );
+  });
+
+  groups.post("/groups/:groupId/expenses/:expenseId/void", async (c) => {
+    const user = await requireSession(c, db);
+    if (user instanceof Response) return user;
+    const groupId = c.req.param("groupId");
+    const expenseId = c.req.param("expenseId");
+    const result = await voidExpense(db, groupId, expenseId, user.id);
+    if (result.ok) {
+      return c.json(result.expense, 200);
+    }
+    if (result.kind === "not_found") {
+      return c.json(
+        errorBody("NOT_FOUND", "Expense not found.", c.get("requestId")),
+        404,
+      );
+    }
+    return c.json(
+      errorBody("VOIDED", "The expense is already voided.", c.get("requestId")),
+      409,
     );
   });
 }

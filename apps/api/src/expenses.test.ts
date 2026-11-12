@@ -222,4 +222,113 @@ describe("expenses", { skip: !hasPostgres }, () => {
       await sql.end({ timeout: 5 });
     }
   });
+
+  it("gets, updates with version, voids, and rejects stale version", async () => {
+    const { db, sql } = createDb(DATABASE_URL);
+    const email = `edit.${randomUUID()}@gmail.com`;
+    try {
+      await migrateJournal();
+      await db.insert(allowedEmails).values([{ email }]);
+
+      const app = createApp(db, {
+        cookieSecure: false,
+        exchangeGoogle: async () => ({ email, displayName: "Edit" }),
+      });
+      const login = await app.request("/auth/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "google", idToken: "fake" }),
+      });
+      const cookie = cookieHeader(login);
+
+      const created = await app.request("/groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ name: "Edit trip" }),
+      });
+      const group = (await created.json()) as { id: string };
+      const [me] = await db.select().from(users).where(eq(users.email, email));
+      assert.ok(me);
+      const [cat] = await db.select().from(categories).where(eq(categories.groupId, group.id));
+
+      const postBody = {
+        note: "Original",
+        occurredOn: "2026-11-07",
+        categoryId: cat.id,
+        amount: 30000,
+        split: { mode: "equal" as const, memberIds: [me.id] },
+        fundingLines: [{ memberId: me.id, amount: 30000 }],
+      };
+      const post = await app.request(`/groups/${group.id}/expenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          cookie,
+          "Idempotency-Key": "k-edit-1",
+        },
+        body: JSON.stringify(postBody),
+      });
+      assert.equal(post.status, 201);
+      const createdExpense = (await post.json()) as { id: string; version: number };
+
+      const get = await app.request(`/groups/${group.id}/expenses/${createdExpense.id}`, {
+        headers: { cookie },
+      });
+      assert.equal(get.status, 200);
+      const detail = (await get.json()) as {
+        version: number;
+        allocationLines: { memberId: string; amount: number }[];
+        note: string;
+      };
+      assert.equal(detail.version, 1);
+      assert.equal(detail.allocationLines.length, 1);
+      assert.equal(detail.allocationLines[0]?.amount, 30000);
+
+      const put = await app.request(`/groups/${group.id}/expenses/${createdExpense.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ ...postBody, note: "Updated", version: 1 }),
+      });
+      assert.equal(put.status, 200);
+      const updated = (await put.json()) as { version: number; note: string };
+      assert.equal(updated.version, 2);
+      assert.equal(updated.note, "Updated");
+
+      const stale = await app.request(`/groups/${group.id}/expenses/${createdExpense.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ ...postBody, note: "Stale", version: 1 }),
+      });
+      assert.equal(stale.status, 409);
+      const staleErr = (await stale.json()) as { error: { code: string } };
+      assert.equal(staleErr.error.code, "VERSION_CONFLICT");
+
+      const voided = await app.request(
+        `/groups/${group.id}/expenses/${createdExpense.id}/void`,
+        { method: "POST", headers: { cookie } },
+      );
+      assert.equal(voided.status, 200);
+      const voidBody = (await voided.json()) as { voided: boolean };
+      assert.equal(voidBody.voided, true);
+
+      const dash = await app.request("/dashboard", { headers: { cookie } });
+      const dashboard = (await dash.json()) as { summary: { net: number } };
+      assert.equal(dashboard.summary.net, 0);
+
+      const voidAgain = await app.request(
+        `/groups/${group.id}/expenses/${createdExpense.id}/void`,
+        { method: "POST", headers: { cookie } },
+      );
+      assert.equal(voidAgain.status, 409);
+
+      const putAfterVoid = await app.request(`/groups/${group.id}/expenses/${createdExpense.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ ...postBody, version: 2 }),
+      });
+      assert.equal(putAfterVoid.status, 409);
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  });
 });

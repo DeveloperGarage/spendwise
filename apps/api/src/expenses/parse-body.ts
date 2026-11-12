@@ -17,6 +17,21 @@ export type ParseCreateErr =
   | { kind: "field"; field: string }
   | { kind: "split_refused"; gap: number };
 
+export type ParsedReplaceExpense = ParsedCreateExpense & { version: number };
+
+export function parseReplaceExpenseBody(body: unknown): ParsedReplaceExpense | ParseCreateErr {
+  if (body === null || typeof body !== "object") {
+    return { kind: "field", field: "body" };
+  }
+  const version = (body as Record<string, unknown>).version;
+  if (typeof version !== "number" || !Number.isInteger(version) || version < 1) {
+    return { kind: "field", field: "version" };
+  }
+  const created = parseCreateExpenseBody(body);
+  if ("kind" in created) return created;
+  return { ...created, version };
+}
+
 export function parseCreateExpenseBody(body: unknown): ParsedCreateExpense | ParseCreateErr {
   if (body === null || typeof body !== "object") {
     return { kind: "field", field: "body" };
