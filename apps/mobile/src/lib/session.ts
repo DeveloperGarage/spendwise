@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { ApiError, getMe, type Me } from '@/lib/api';
+import { ApiError, getMe, type Me } from '@/lib/api/clients';
 
 export function useMe() {
   return useQuery<Me | null>({

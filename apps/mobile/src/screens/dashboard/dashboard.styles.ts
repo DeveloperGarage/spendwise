@@ -18,11 +18,6 @@ export const createStyles = (theme: Theme) =>
       justifyContent: 'center',
       backgroundColor: theme.background,
     },
-    scrollContent: {
-      paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.lg,
-    },
 
     // ----- Header -----
     header: {
@@ -144,12 +139,5 @@ export const createStyles = (theme: Theme) =>
     },
     pressed: {
       opacity: Opacity.pressed,
-    },
-
-    // ----- Footer -----
-    footer: {
-      paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.lg,
     },
   });

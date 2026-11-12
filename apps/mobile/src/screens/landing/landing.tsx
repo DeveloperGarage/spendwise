@@ -9,7 +9,7 @@ import { GoogleIcon } from '@/components/google-icon';
 import { LogoBadge } from '@/components/logo-badge';
 import { useBreakpoint } from '@/hooks/use-breakpoint';
 import { useTheme } from '@/hooks/use-theme';
-import { startGoogleSignIn } from '@/lib/api';
+import { startGoogleSignIn } from '@/lib/api/clients';
 import { useMe } from '@/lib/session';
 import { createStyles } from './landing.styles';
 import {SafeArea} from "@/custom-elements";

@@ -73,7 +73,6 @@ export function AddExpenseScreen() {
     <SafeArea>
       <ScreenContainer>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           <PageHeader>
@@ -184,7 +183,7 @@ export function AddExpenseScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View>
           <Button label="Save Expense" onPress={onSave} />
         </View>
       </ScreenContainer>

@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
-import type { Me } from '@/lib/api';
+import {Me, request} from '@/lib/api/clients';
+import {groupsFactory} from "./factories";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const STORAGE_KEY = 'spendwise.mock.session';
@@ -57,4 +58,8 @@ export const handlers = [
     save(session);
     return HttpResponse.json(session.user);
   }),
+
+  http.get(`${API_URL}/groups/:userId`, ({ params }) => {
+    return HttpResponse.json(groupsFactory({ userId: params.userId, count: 10 }));
+  })
 ];

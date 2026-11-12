@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Button } from '@/components/button';
 import { useTheme } from '@/hooks/use-theme';
-import { patchMe, type Me } from '@/lib/api';
+import { patchMe, type Me } from '@/lib/api/clients';
 import { useMe } from '@/lib/session';
 import { createStyles } from './profile.styles';
 import {SafeArea} from "@/custom-elements";

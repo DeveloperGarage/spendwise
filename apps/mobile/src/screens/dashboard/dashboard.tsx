@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatRupees } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
-import {GroupList} from "@/components/group-list";
+import {Groups} from "@/components/group-list";
 import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
 
 
@@ -41,13 +41,12 @@ export function DashboardScreen() {
   }
 
   const onAddExpense = () => router.push('/add-expense' as Href);
-  const onSeeAll = () => { /* TODO: navigate to the full groups list */ };
+  const onSeeAll = () => { router.push('/groups' as Href) };
 
   return (
     <SafeArea>
       <ScreenContainer>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
           <PageHeader>
             <View style={styles.headerText}>
@@ -79,10 +78,10 @@ export function DashboardScreen() {
             </View>
           </LinearGradient>
 
-          <GroupList userId={'user5'} onSeeAll={onSeeAll} />
+          <Groups userId={'user5'} onSeeAll={onSeeAll} />
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View>
           <Button label="+ Add expense" onPress={onAddExpense} />
         </View>
       </ScreenContainer>

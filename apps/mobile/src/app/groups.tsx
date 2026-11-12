@@ -1,0 +1,1 @@
+export {GroupsScreen as default} from '@/screens/groups/groups'

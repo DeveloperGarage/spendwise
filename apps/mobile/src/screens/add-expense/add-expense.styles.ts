@@ -12,12 +12,6 @@ import {
 
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
-    scrollContent: {
-      paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.lg,
-    },
-
     // ----- Header -----
     header: {
       flexDirection: 'row',
@@ -191,12 +185,5 @@ export const createStyles = (theme: Theme) =>
     },
     pressed: {
       opacity: Opacity.pressed,
-    },
-
-    // ----- Footer -----
-    footer: {
-      paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
-      paddingBottom: Spacing.lg,
     },
   });
