@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import {useLocalSearchParams, useRouter} from 'expo-router';
 
 import { Button } from '@/components/button';
+import { Dropdown } from '@/components/dropdown';
 import { TextButton } from '@/components/text-button';
 import { useTheme } from '@/hooks/use-theme';
 import { formatRupees, groupIndian } from '@/lib/money';
@@ -12,6 +13,7 @@ import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
 import {saveExpense} from "@/lib/api/expense";
 import {Expense} from "@/domain/models/expense";
 import {getMembersForGroup} from "@/lib/api/members";
+import {getGroupsForUser} from "@/lib/api/groups";
 import {Group} from "@/domain/models/group";
 
 type SplitMode = 'equally' | 'exact' | 'percent';
@@ -57,7 +59,20 @@ export function AddExpenseScreen() {
   });
 
   const selectPayee = () => { /* TODO: implement payee selection */ }
-  const selectGroup = () => { /* TODO: implement group selection */ }
+
+  useEffect(() => {
+    getGroupsForUser('mock-user-1').then(setGroups).catch(console.error);
+  }, []);
+
+  const groupOptions = useMemo(
+    () => groups.map((group) => ({ id: group.id, label: group.name })),
+    [groups],
+  );
+
+  const payeeOptions = useMemo(
+    () => members.map((member) => ({ id: member.id, label: member.name })),
+    [members],
+  );
 
   // Equal split across the selected members; everyone else owes nothing.
   // TODO: support the Exact and % modes with per-member inputs.
@@ -139,29 +154,18 @@ export function AddExpenseScreen() {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Pressable
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.rowField, pressed && styles.pressed]}
-              onPress={selectGroup}>
-              <Text style={styles.rowFieldLabel}>Group</Text>
-              <View style={styles.rowFieldValueWrap}>
-                <Text style={styles.rowFieldValue}>Goa Trip</Text>
-                <Text style={styles.chevronRight}>›</Text>
-              </View>
-            </Pressable>
+            <Dropdown
+              label="Group"
+              placeholder="Select a group"
+              options={groupOptions}
+              selectedId={selectedGroupId}
+              onSelect={setSelectedGroupId}
+              emptyText="No groups yet"
+            />
           </View>
 
           <View style={styles.fieldBlock}>
-            <Pressable
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.rowField, pressed && styles.pressed]}
-              onPress={selectPayee}>
-              <Text style={styles.rowFieldLabel}>Paid by</Text>
-              <View style={styles.rowFieldValueWrap}>
-                <Text style={styles.rowFieldValue}>{paidBy}</Text>
-                <Text style={styles.chevronRight}>›</Text>
-              </View>
-            </Pressable>
+            <Dropdown label="Paid by" options={payeeOptions} selectedId={paidBy} onSelect={setPaidBy} />
           </View>
 
           <View style={styles.fieldBlock}>
