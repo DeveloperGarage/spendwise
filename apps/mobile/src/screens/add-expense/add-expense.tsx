@@ -1,28 +1,25 @@
-import {useEffect, useMemo, useState} from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import {useLocalSearchParams, useRouter} from 'expo-router';
+import {useCallback, useEffect, useMemo, useState} from 'react';
+import {Pressable, ScrollView, Text, TextInput, View} from 'react-native';
+import {useLocalSearchParams} from 'expo-router';
 
-import { Button } from '@/components/button';
-import { Dropdown } from '@/components/dropdown';
-import { TextButton } from '@/components/text-button';
-import { useTheme } from '@/hooks/use-theme';
-import { formatRupees, groupIndian } from '@/lib/money';
-import { splitEqually } from '@/lib/split';
-import { createStyles } from './add-expense.styles';
-import {SafeArea, PageHeader, ScreenContainer, TextField} from "@/custom-elements";
+import {Button} from '@/components/button';
+import {Dropdown} from '@/components/dropdown';
+import {TextButton} from '@/components/text-button';
+import {useTheme} from '@/hooks/use-theme';
+import {formatRupees, groupIndian} from '@/lib/money';
+import {splitEqually} from '@/lib/split';
+import {createStyles} from './add-expense.styles';
+import {PageHeader, SafeArea, ScreenContainer, TextField} from "@/custom-elements";
 import {saveExpense} from "@/lib/api/expense";
-import {Expense} from "@/domain/models/expense";
-import {getMembersForGroup} from "@/lib/api/members";
+import {PostExpense} from "@/domain/models/postExpense";
 import {getGroupsForUser} from "@/lib/api/groups";
-import {Group} from "@/domain/models/group";
+import {Groups} from "@/domain/models/group";
 import {useGoBack} from "@/hooks/use-go-back";
+import {getMembersForGroup} from "@/lib/api/members";
+import {Member} from "@/domain/models/members";
+import {useMe} from "@/lib/session";
 
 type SplitMode = 'equally' | 'exact' | 'percent';
-
-type Member = {
-  id: string;
-  name: string;
-};
 
 const SPLIT_MODES: { key: SplitMode; label: string }[] = [
   { key: 'equally', label: 'Equally' },
@@ -30,40 +27,44 @@ const SPLIT_MODES: { key: SplitMode; label: string }[] = [
   { key: 'percent', label: '%' },
 ];
 
-const MEMBERS: Member[] = [
-  { id: 'you', name: 'You' },
-  { id: 'riya', name: 'Riya' },
-  { id: 'sam', name: 'Sam' },
-  { id: 'dev', name: 'Dev' },
-];
-
 export function AddExpenseScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const router = useRouter();
+  const { data: me } = useMe();
 
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
-
-  const [members, setMembers] = useState<Member[]>(MEMBERS);
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groupMembers, setGroupMembers] = useState<Member[]>([]);
+  const [groups, setGroups] = useState<Groups>([]);
 
   const [selectedGroupId, setSelectedGroupId] = useState(groupId);
   const [amount, setAmount] = useState(1200);
   const [description, setDescription] = useState("Dinner at Britto's");
-  const [paidBy, setPaidBy] = useState("you");
+  const [paidBy, setPaidBy] = useState('');
   const [splitMode, setSplitMode] = useState<SplitMode>('equally');
-  const [selected, setSelected] = useState<Record<string, boolean>>({
-    you: true,
-    riya: true,
-    sam: true,
-    dev: false,
-  });
-
-  const selectPayee = () => { /* TODO: implement payee selection */ }
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    getGroupsForUser('mock-user-1').then(setGroups).catch(console.error);
+    getGroupsForUser().then(setGroups).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (!selectedGroupId) return;
+    getMembersForGroup(selectedGroupId).then(setGroupMembers).catch(console.error);
+  }, [selectedGroupId]);
+
+  const members = useMemo<Member[]>(() => {
+    const base = selectedGroupId ? groupMembers : me ? [me] : [];
+    return base.map((member) =>
+      me && member.id === me.id ? { ...member, displayName: 'You' } : member,
+    );
+  }, [selectedGroupId, groupMembers, me]);
+
+  const isMemberSelected = useCallback(
+    (id: string) => selected[id] ?? true,
+    [selected],
+  );
+
+  const effectivePaidBy = paidBy || me?.id || '';
 
   const groupOptions = useMemo(
     () => groups.map((group) => ({ id: group.id, label: group.name })),
@@ -71,46 +72,50 @@ export function AddExpenseScreen() {
   );
 
   const payeeOptions = useMemo(
-    () => members.map((member) => ({ id: member.id, label: member.name })),
+    () => members.map((member) => ({id: member.id, label: member.displayName})),
     [members],
   );
 
   // Equal split across the selected members; everyone else owes nothing.
   // TODO: support the Exact and % modes with per-member inputs.
   const shares = useMemo(() => {
-    const selectedIds = MEMBERS.filter((m) => selected[m.id]).map((m) => m.id);
+    const selectedIds = members.filter((m) => isMemberSelected(m.id)).map((m) => m.id);
     const amounts = splitEqually(amount, selectedIds.length);
     const byId: Record<string, number> = {};
     selectedIds.forEach((id, index) => {
       byId[id] = amounts[index];
     });
     return byId;
-  }, [amount, selected]);
+  }, [amount, members, isMemberSelected]);
 
   const onAmountChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '');
     setAmount(digits ? Number(digits) : 0);
   };
 
+  const onGroupSelect = (groupId: string) => {
+    setSelectedGroupId(groupId);
+  }
+
   const toggleMember = (id: string) => {
-    setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+    setSelected((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
   };
 
-  const createExpenseObject = (): Expense => {
+  const createExpenseObject = (): PostExpense => {
     return {
       amount,
       note: description,
       occurredOn: new Date().toISOString(),
       categoryId: 'others', // TODO: support category selection
-      fundingLines: [{memberId: paidBy, amount }],
+      fundingLines: [{memberId: effectivePaidBy, amount }],
       split: { mode: splitMode, memberIds: Object.keys(shares) },
     };
   };
 
-  const onCancel =  useGoBack();
+  const goBack = useGoBack();
+  const onCancel =  goBack;
   const onSave = () => {
-    // TODO: validate inputs
-
+    saveExpense(createExpenseObject(), selectedGroupId!).then(goBack).catch(console.error);
   };
 
   return (
@@ -158,13 +163,13 @@ export function AddExpenseScreen() {
               placeholder="Select a group"
               options={groupOptions}
               selectedId={selectedGroupId}
-              onSelect={setSelectedGroupId}
+              onSelect={onGroupSelect}
               emptyText="No groups yet"
             />
           </View>
 
           <View style={styles.fieldBlock}>
-            <Dropdown label="Paid by" options={payeeOptions} selectedId={paidBy} onSelect={setPaidBy} />
+            <Dropdown label="Paid by" options={payeeOptions} selectedId={effectivePaidBy} onSelect={setPaidBy} />
           </View>
 
           <View style={styles.fieldBlock}>
@@ -189,8 +194,8 @@ export function AddExpenseScreen() {
           </View>
 
           <View style={styles.membersCard}>
-            {MEMBERS.map((member, index) => {
-              const checked = !!selected[member.id];
+            {members.map((member, index) => {
+              const checked = isMemberSelected(member.id);
               const share = shares[member.id] ?? 0;
               return (
                 <Pressable
@@ -206,7 +211,7 @@ export function AddExpenseScreen() {
                   <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
                     {checked ? <Text style={styles.checkboxCheck}>✓</Text> : null}
                   </View>
-                  <Text style={styles.memberName}>{member.name}</Text>
+                  <Text style={styles.memberName}>{member.displayName}</Text>
                   <Text style={[styles.memberAmount, share === 0 && styles.memberAmountZero]}>
                     {formatRupees(share)}
                   </Text>

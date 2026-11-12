@@ -32,8 +32,8 @@ const membersTemplate =
 export const membersFactory = (overrides: any = {}): any[] =>
   Array.from({ length: 3 }, (_, i) => ({
     ...membersTemplate,
-    id: `m${i + 1}`,
-    displayName: i === 0 ? 'You' : `Member ${i + 1}`,
+    id: `mock-user-${i}`,
+    displayName: `${overrides.groupId} Member ${i + 1}`,
     email: i === 0 ? 'you@example.com' : `member${i + 1}@example.com`,
     ...overrides,
   }));

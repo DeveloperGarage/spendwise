@@ -3,11 +3,11 @@ import { useMemo } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
 import { formatRupees, groupIndian } from '@/lib/money';
-import { Expense } from '@/domain/models/expense';
+import { PostExpense } from '@/domain/models/postExpense';
 import { createStyles } from './expense-list.styles';
 
 type ExpenseListProps = Readonly<{
-  expenses: Expense[];
+  expenses: PostExpense[];
   onOpenExpense?: (id: string) => void;
 }>;
 

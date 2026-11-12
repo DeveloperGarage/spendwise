@@ -6,7 +6,7 @@ import { createStyles } from "./gropus-list.styles";
 import {Groups} from "@/domain/models/group";
 import {Href, router} from "expo-router";
 
-const onOpenGroup = (id: string) => { router.push(`/view-group/${id}` as Href) };
+const onOpenGroup = (id: string) => router.push(`/view-group/${id}` as Href);
 export function GroupsList({groups, limit}: Readonly<{ groups: Groups, limit: number }>) {
   const theme = useTheme();
   const styles = useMemo(() =>

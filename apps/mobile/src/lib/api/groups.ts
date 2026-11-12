@@ -1,15 +1,15 @@
 import {Group, Groups, POST_GROUP} from "@/domain/models/group";
-import {Expense} from "@/domain/models/expense";
+import {PostExpense} from "@/domain/models/postExpense";
 import {request} from "@/lib/api/clients";
 
-export const getGroupsForUser = (userId: string) =>
-  request<Groups>('/groups/' + userId);
+export const getGroupsForUser = () =>
+  request<Groups>('/groups/');
 
 export const getGroupById = (groupId: string) =>
   request<Group>('/groups/group/' + groupId);
 
 export const getExpensesForGroup = (groupId: string) =>
-  request<Expense[]>('/groups/group/' + groupId + '/expenses');
+  request<PostExpense[]>('/groups/group/' + groupId + '/expenses');
 
 export const createGroup = (group: POST_GROUP) =>
   request<Group>('/groups', {

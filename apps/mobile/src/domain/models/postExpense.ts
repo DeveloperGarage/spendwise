@@ -5,7 +5,7 @@ type FundingLine = {
   amount: number;
 };
 
-export type Expense = {
+export type PostExpense = {
   note: string,
   occurredOn: string,
   amount: number,

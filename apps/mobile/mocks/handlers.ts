@@ -74,7 +74,7 @@ export const handlers = [
     return HttpResponse.json(expensesFactory({ groupId }));
   }),
 
-  http.get(`${API_URL}/groups/group/:groupId/members`, ({ params }) => {
+  http.get(`${API_URL}/groups/:groupId/members`, ({ params }) => {
     const groupId = params.groupId;
     return HttpResponse.json(membersFactory({ groupId }));
   }),
@@ -87,7 +87,15 @@ export const handlers = [
     });
   }),
 
-  http.post(`${API_URL}/groups`, async ({ request }) => {
+  http.post(`${API_URL}/groups`,  ({ request }) => {
     return new HttpResponse(null, { status: 201 });
+  }),
+
+  http.get(`${API_URL}/groups`,  ({ request }) => {
+    return HttpResponse.json(groupsFactory({ userId: 'mock-user-1' }, 2));
+  }),
+
+  http.post(`${API_URL}/groups/:groupId/expenses`, ({ params }) => {
+    return new HttpResponse(null, { status: 200 });
   })
 ];
