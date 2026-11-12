@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatRupees, groupIndian } from '@/lib/money';
 import { splitEqually } from '@/lib/split';
 import { createStyles } from './add-expense.styles';
-import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
+import {SafeArea, PageHeader, ScreenContainer, TextField} from "@/custom-elements";
 import {saveExpense} from "@/lib/api/expense";
 import {Expense} from "@/domain/models/expense";
 import {getMembersForGroup} from "@/lib/api/members";
@@ -144,12 +144,10 @@ export function AddExpenseScreen() {
 
           <View style={styles.fieldBlock}>
             <Text style={styles.sectionLabel}>DESCRIPTION</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
               value={description}
               onChangeText={setDescription}
               placeholder="What was it for?"
-              placeholderTextColor={theme.textSecondary}
             />
           </View>
 

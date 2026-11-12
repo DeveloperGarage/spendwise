@@ -35,17 +35,6 @@ export const createStyles = (theme: Theme) =>
       color: theme.textSecondary,
       marginBottom: Spacing.sm,
     },
-    input: {
-      ...Typography.body,
-      color: theme.text,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
-      borderRadius: Radius.lg,
-      paddingHorizontal: Spacing.lg,
-      paddingVertical: Spacing.md,
-      minHeight: Sizes.buttonHeight,
-    },
 
     // ----- Members -----
     membersCard: {

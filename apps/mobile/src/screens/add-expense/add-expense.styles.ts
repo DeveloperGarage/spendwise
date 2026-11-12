@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 
 import {
   Opacity,
@@ -54,6 +54,9 @@ export const createStyles = (theme: Theme) =>
       marginTop: Spacing.sm,
       paddingVertical: 0,
       minWidth: 160,
+      ...Platform.select({
+        web: { outlineStyle: 'none' } as any,
+      }),
     },
 
     // ----- Generic field block -----
@@ -64,17 +67,6 @@ export const createStyles = (theme: Theme) =>
       ...Typography.overline,
       color: theme.textSecondary,
       marginBottom: Spacing.sm,
-    },
-    input: {
-      ...Typography.body,
-      color: theme.text,
-      backgroundColor: theme.surface,
-      borderWidth: 1,
-      borderColor: theme.border,
-      borderRadius: Radius.lg,
-      paddingHorizontal: Spacing.lg,
-      paddingVertical: Spacing.md,
-      minHeight: Sizes.buttonHeight,
     },
 
     // ----- Row field (Paid by / Group) -----

@@ -4,7 +4,7 @@ import {useRouter} from 'expo-router';
 
 import {Button} from '@/components/button';
 import {TextButton} from '@/components/text-button';
-import {PageHeader, SafeArea, ScreenContainer} from '@/custom-elements';
+import {PageHeader, SafeArea, ScreenContainer, TextField} from '@/custom-elements';
 import {useTheme} from '@/hooks/use-theme';
 import {createStyles} from './add-group.styles';
 import {createGroup} from "@/lib/api/groups";
@@ -74,23 +74,19 @@ export function AddGroupScreen() {
 
           <View style={styles.fieldBlock}>
             <Text style={styles.sectionLabel}>Name</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
               value={name}
               onChangeText={setName}
               placeholder="e.g. Goa Trip"
-              placeholderTextColor={theme.textSecondary}
             />
           </View>
 
           <View style={styles.fieldBlock}>
             <Text style={styles.sectionLabel}>Description</Text>
-            <TextInput
-              style={styles.input}
+            <TextField
               value={description}
               onChangeText={setDescription}
               placeholder="What's this group for?"
-              placeholderTextColor={theme.textSecondary}
             />
           </View>
 
@@ -117,14 +113,13 @@ export function AddGroupScreen() {
         </View>)
           }
           <View style={styles.emailRow}>
-            <TextInput
+            <TextField
               ref={emailInputRef}
-              style={[styles.input, styles.emailInput]}
+              style={styles.emailInput}
               value={email}
               onChangeText={setEmail}
               onSubmitEditing={onAddEmail}
               placeholder="Enter email addresses to add members"
-              placeholderTextColor={theme.textSecondary}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
