@@ -15,6 +15,7 @@ import {Expense} from "@/domain/models/expense";
 import {getMembersForGroup} from "@/lib/api/members";
 import {getGroupsForUser} from "@/lib/api/groups";
 import {Group} from "@/domain/models/group";
+import {useGoBack} from "@/hooks/use-go-back";
 
 type SplitMode = 'equally' | 'exact' | 'percent';
 
@@ -106,7 +107,7 @@ export function AddExpenseScreen() {
     };
   };
 
-  const onCancel = () => router.back();
+  const onCancel =  useGoBack();
   const onSave = () => {
     // TODO: validate inputs
 

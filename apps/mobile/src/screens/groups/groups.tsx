@@ -1,4 +1,4 @@
-import {PageHeader, ScreenContainer, SafeArea} from "@/custom-elements";
+import {PageHeader, SafeArea, ScreenContainer} from "@/custom-elements";
 import {Pressable, Text} from "react-native";
 import {createStyles} from "@/screens/groups/groups.styles";
 import {useTheme} from "@/hooks/use-theme";
@@ -8,18 +8,19 @@ import Svg, {Path} from "react-native-svg";
 import {router} from "expo-router";
 import {GroupsList} from "@/components/group-list";
 import {getGroupsForUser} from "@/lib/api/groups";
-import {Group} from "@/domain/models/group";
+import {Groups} from "@/domain/models/group";
+import {useGoBack} from "@/hooks/use-go-back";
 
 export function GroupsScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [groups, setGroups] = useState<Groups>([]);
 
   useEffect(() => {
     getGroupsForUser("mock-user-1").then(setGroups).catch(console.error);
   }, []);
 
-  const onCancel = () => {router.back()};
+  const onCancel = useGoBack()
   const onAddGroup = () => {router.push('/add-group')};
 
   return (

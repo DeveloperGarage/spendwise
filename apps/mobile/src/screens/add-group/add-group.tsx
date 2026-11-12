@@ -8,6 +8,7 @@ import {PageHeader, SafeArea, ScreenContainer, TextField} from '@/custom-element
 import {useTheme} from '@/hooks/use-theme';
 import {createStyles} from './add-group.styles';
 import {createGroup} from "@/lib/api/groups";
+import {useGoBack} from "@/hooks/use-go-back";
 
 type DraftMember = { id: string; displayName: string };
 
@@ -22,7 +23,7 @@ export function AddGroupScreen() {
   const [members, setMembers] = useState<DraftMember[]>([]);
   const emailInputRef = useRef<ComponentRef<typeof TextInput>>(null);
 
-  const onCancel = () => router.back();
+  const onCancel = useGoBack()
 
   const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 

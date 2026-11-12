@@ -1,16 +1,12 @@
 import {Text, View} from "react-native";
 import {TextButton} from "@/components/text-button";
 import {useTheme} from "@/hooks/use-theme";
-import {useEffect, useMemo, useState} from "react";
+import {useMemo} from "react";
 import {createStyles} from "@/components/group-list/user-groups.styles";
 import {GroupsList} from "@/components/group-list/groups-list";
-import {getGroupsForUser} from "@/lib/api/groups";
-import {Group} from "@/domain/models/group";
-import {Member} from "@/domain/models/members";
-import {getMembersForGroup} from "@/lib/api/members";
-import {Button} from "@/components/button";
+import {Groups} from "@/domain/models/group";
 
-type GroupListProps = { groups: Group[], onSeeAll: () => void };
+type GroupListProps = { groups: Groups, onSeeAll: () => void };
 export function Groups ({groups, onSeeAll}: Readonly<GroupListProps>) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
