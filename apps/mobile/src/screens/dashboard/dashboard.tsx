@@ -9,7 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatRupees } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
-import {Groups} from "@/components/group-list";
+import {ShowGroups} from "@/components/group-list";
 import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
 import {loadDashBoardData} from "@/lib/api/dashboard";
 import {Dashboard} from "@/domain/models/dashboard";
@@ -100,7 +100,7 @@ export function DashboardScreen() {
             </View>
           </LinearGradient>
 
-          <Groups groups={dashboardData?.groups ?? []} onSeeAll={onSeeAll}/>
+          <ShowGroups groups={dashboardData?.groups ?? []} onSeeAll={onSeeAll}/>
         </ScrollView>
 
         <View>

@@ -7,7 +7,7 @@ import {GroupsList} from "@/components/group-list/groups-list";
 import {Groups} from "@/domain/models/group";
 
 type GroupListProps = { groups: Groups, onSeeAll: () => void };
-export function Groups ({groups, onSeeAll}: Readonly<GroupListProps>) {
+export function ShowGroups ({groups, onSeeAll}: Readonly<GroupListProps>) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
