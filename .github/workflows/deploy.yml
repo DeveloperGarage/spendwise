@@ -1,0 +1,85 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  WRANGLER_SEND_METRICS: "false"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: spendwise
+          POSTGRES_PASSWORD: spendwise
+          POSTGRES_DB: spendwise
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U spendwise -d spendwise"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://spendwise:spendwise@localhost:5432/spendwise
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+
+  deploy:
+    name: Worker
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Expo web
+        run: npm ci
+        working-directory: apps/mobile
+      - name: Export PWA
+        run: npx expo export --platform web
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_URL: /api
+      - name: Bind Hyperdrive
+        env:
+          HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID }}
+        run: |
+          if [ -z "$HYPERDRIVE_ID" ]; then
+            echo "HYPERDRIVE_ID secret is missing"
+            exit 1
+          fi
+          sed -i "s/HYPERDRIVE_ID_PLACEHOLDER/${HYPERDRIVE_ID}/" apps/api/wrangler.jsonc
+      - name: Deploy Worker
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy

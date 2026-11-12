@@ -11,7 +11,9 @@
     "typecheck": "npm run typecheck -w packages/domain && npm run typecheck -w apps/api",
     "test:domain": "npm run test -w packages/domain",
     "db:up": "docker compose up -d postgres",
-    "db:migrate": "npm run db:migrate -w apps/api"
+    "db:migrate": "npm run db:migrate -w apps/api",
+    "export:web": "npm --prefix apps/mobile exec -- expo export --platform web",
+    "deploy": "npm run export:web && npm run deploy -w apps/api"
   },
   "engines": {
     "node": ">=20.19.4"

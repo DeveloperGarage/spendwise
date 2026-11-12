@@ -1,0 +1,5 @@
+APP_ORIGIN=http://localhost:8787
+PUBLIC_API_URL=http://localhost:8787/api
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+COOKIE_SECURE=false

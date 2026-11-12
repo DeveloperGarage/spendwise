@@ -35,6 +35,35 @@ http://localhost:3000/auth/dev-login?email=you@gmail.com
 
 The email must still be in `allowed_emails`. The route sets the session cookie and redirects to the app, the same way the Google callback does. It is not registered when the flag is off or when `NODE_ENV=production`.
 
+## Production Worker
+
+One Cloudflare Worker serves the Expo web PWA and this app at `/api`. Local and CI stay Node LTS with `postgres.js`. Production uses `pg` through Hyperdrive, pointed at the **direct** Supabase connection (`db.<project>.supabase.co:5432`), not the pooler on `6543`.
+
+1. Apply the journal to Mumbai (`DATABASE_URL` = the direct URI, then `npm run db:migrate`). Seed `allowed_emails` on that database too.
+2. Create Hyperdrive with caching off so a new session is visible on the next read:
+
+   ```bash
+   npx wrangler hyperdrive create spendwise-pg \
+     --connection-string "postgres://…" \
+     --caching-disabled
+   ```
+
+   Put the returned id in GitHub secret `HYPERDRIVE_ID`, or replace `HYPERDRIVE_ID_PLACEHOLDER` in `wrangler.jsonc`.
+3. GitHub secrets: `CLOUDFLARE_API_TOKEN` (template **Edit Cloudflare Workers**), `CLOUDFLARE_ACCOUNT_ID`, `HYPERDRIVE_ID`.
+4. Worker secrets (not the GitHub file): `APP_ORIGIN` (`https://spendwise.<account>.workers.dev`), `PUBLIC_API_URL` (`https://spendwise.<account>.workers.dev/api`), `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
+
+   ```bash
+   npx wrangler secret put APP_ORIGIN
+   npx wrangler secret put PUBLIC_API_URL
+   npx wrangler secret put SUPABASE_URL
+   npx wrangler secret put SUPABASE_ANON_KEY
+   ```
+
+5. Supabase **Redirect URLs** must include `https://<worker-origin>/api/auth/callback` as well as localhost. Site URL can be the Worker origin. Do not put the Worker URL in Google Cloud’s authorized redirect list; that stays `https://<project>.supabase.co/auth/v1/callback`.
+6. Push to `main`. GitHub Actions exports the PWA with `EXPO_PUBLIC_API_URL=/api` and deploys. There is no APK.
+
+A daily cron hits `select 1` through Hyperdrive so the free Supabase project does not pause after seven idle days. Journal writes stay in Hono; the PWA does not use `supabase-js` for expenses.
+
 After changing `src/db/schema.ts`, generate a named SQL file (drizzle-kit otherwise picks a random label):
 
 ```bash

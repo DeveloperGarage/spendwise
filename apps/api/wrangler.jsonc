@@ -1,0 +1,43 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "spendwise",
+	"main": "src/worker.ts",
+	"compatibility_date": "2026-11-11",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	// Keep *.workers.dev and version previews on. Absent keys are treated as off.
+	"workers_dev": true,
+	"preview_urls": true,
+	"assets": {
+		"directory": "../mobile/dist",
+		"binding": "ASSETS",
+		"html_handling": "auto-trailing-slash",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api",
+			"/api/*"
+		],
+	},
+	"triggers": {
+		"crons": [
+			"0 12 * * *"
+		],
+	},
+	"vars": {
+		"COOKIE_SECURE": "true",
+	},
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE",
+			// Replace with `wrangler hyperdrive create` output, or let CI sed this token.
+			"id": "HYPERDRIVE_ID_PLACEHOLDER",
+			"localConnectionString": "postgres://spendwise:spendwise@localhost:5432/spendwise",
+		},
+		{
+			"binding": "HYPERDRIVE",
+			"id": "d86bdc23db2e46769184a37302ce2bf1",
+			"remote": true
+		},
+	],
+}
