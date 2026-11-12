@@ -3,11 +3,11 @@ import {formatRupees} from "@/lib/money";
 import {useTheme} from "@/hooks/use-theme";
 import {useMemo} from "react";
 import { createStyles } from "./gropus-list.styles";
-import {Group} from "@/domain/models/group";
+import {Groups} from "@/domain/models/group";
 import {Href, router} from "expo-router";
 
 const onOpenGroup = (id: string) => { router.push(`/view-group/${id}` as Href) };
-export function GroupsList({groups, limit}: Readonly<{ groups: Group[], limit: number }>) {
+export function GroupsList({groups, limit}: Readonly<{ groups: Groups, limit: number }>) {
   const theme = useTheme();
   const styles = useMemo(() =>
     createStyles(theme), [theme]);
@@ -33,7 +33,7 @@ export function GroupsList({groups, limit}: Readonly<{ groups: Group[], limit: n
             <View style={styles.groupInfo}>
               <Text style={styles.groupName}>{group.name}</Text>
               <Text style={styles.groupMembers}>
-                {group.membersCount} people
+                {group.memberCount} people
               </Text>
             </View>
 

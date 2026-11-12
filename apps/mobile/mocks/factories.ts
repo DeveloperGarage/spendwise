@@ -2,6 +2,7 @@ const groupsTemplate = {
   id: 'mock-group-1',
   userId: 'mock-user-1',
   name: 'Mock Group 1',
+  memberCount: 3,
   balance: 100,
 };
 export const groupsFactory = (overrides: any = {}, count?: number): any[] => {

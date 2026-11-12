@@ -12,6 +12,13 @@ export type Group = {
   members: GroupMember[];
 };
 
+export type Groups = {
+  id: string;
+  name: string;
+  balance: number;
+  memberCount: number;
+}[];
+
 export type POST_GROUP = {
   name: string;
   memberEmails: string[];
