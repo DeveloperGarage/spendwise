@@ -68,15 +68,6 @@ jobs:
         working-directory: apps/mobile
         env:
           EXPO_PUBLIC_API_URL: /api
-      - name: Bind Hyperdrive
-        env:
-          HYPERDRIVE_ID: ${{ secrets.HYPERDRIVE_ID }}
-        run: |
-          if [ -z "$HYPERDRIVE_ID" ]; then
-            echo "HYPERDRIVE_ID secret is missing"
-            exit 1
-          fi
-          sed -i "s/HYPERDRIVE_ID_PLACEHOLDER/${HYPERDRIVE_ID}/" apps/api/wrangler.jsonc
       - name: Deploy Worker
         working-directory: apps/api
         env:

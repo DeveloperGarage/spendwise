@@ -48,8 +48,8 @@ One Cloudflare Worker serves the Expo web PWA and this app at `/api`. Local and 
      --caching-disabled
    ```
 
-   Put the returned id in GitHub secret `HYPERDRIVE_ID`, or replace `HYPERDRIVE_ID_PLACEHOLDER` in `wrangler.jsonc`.
-3. GitHub secrets: `CLOUDFLARE_API_TOKEN` (template **Edit Cloudflare Workers**), `CLOUDFLARE_ACCOUNT_ID`, `HYPERDRIVE_ID`.
+   Paste the returned id into the single `hyperdrive` binding in `wrangler.jsonc`. Do not add a second `HYPERDRIVE` entry (`wrangler hyperdrive create` will offer to; that duplicates the name and deploy fails). Hyperdrive has no `remote` flag — local dev uses `localConnectionString`.
+3. GitHub secrets: `CLOUDFLARE_API_TOKEN` (template **Edit Cloudflare Workers**), `CLOUDFLARE_ACCOUNT_ID`. The Hyperdrive id lives in `wrangler.jsonc`, not in GitHub secrets.
 4. Worker secrets (not the GitHub file): `APP_ORIGIN` (`https://spendwise.<account>.workers.dev`), `PUBLIC_API_URL` (`https://spendwise.<account>.workers.dev/api`), `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 
    ```bash
