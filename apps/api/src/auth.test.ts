@@ -25,7 +25,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `aman.${randomUUID()}@gmail.com`;
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       await db.insert(allowedEmails).values({ email });
       const app = createApp(db, {
         cookieSecure: false,
@@ -57,7 +57,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `stranger.${randomUUID()}@gmail.com`;
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       const sessionsBefore = await db.select().from(sessions);
       const app = createApp(db, {
         cookieSecure: false,
@@ -86,7 +86,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `riya.${randomUUID()}@gmail.com`;
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       await db.insert(allowedEmails).values({ email });
       const app = createApp(db, {
         cookieSecure: false,
@@ -121,7 +121,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `sam.${randomUUID()}@gmail.com`;
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       await db.insert(allowedEmails).values({ email });
       const app = createApp(db, {
         cookieSecure: false,
@@ -151,7 +151,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
   it("redirects GET /auth/google to Supabase with PKCE", async () => {
     const { db, sql } = createDb(DATABASE_URL);
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       const app = createApp(db, {
         cookieSecure: false,
         supabaseUrl: "https://example.supabase.co",
@@ -176,7 +176,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `callback.${randomUUID()}@gmail.com`;
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       await db.insert(allowedEmails).values({ email });
       const app = createApp(db, {
         cookieSecure: false,
@@ -201,7 +201,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
   it("does not create a session when GET /auth/callback has no code", async () => {
     const { db, sql } = createDb(DATABASE_URL);
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       const app = createApp(db, {
         cookieSecure: false,
         exchangeGoogle: async () => ({ email: "unused@gmail.com", displayName: "Unused" }),
@@ -218,7 +218,7 @@ describe("Google OAuth allowlist", { skip: !hasPostgres }, () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `dev.${randomUUID()}@gmail.com`;
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       await db.insert(allowedEmails).values({ email });
 
       const off = createApp(db, { cookieSecure: false, devAuthBypass: false });

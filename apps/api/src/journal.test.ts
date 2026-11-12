@@ -21,10 +21,14 @@ import { amountToJson } from "./money.ts";
 const hasPostgres = await postgresAvailable();
 
 describe("journal paise round-trip", { skip: !hasPostgres }, () => {
+  it("applies migrations once when two callers race", async () => {
+    await Promise.all([migrateJournal(), migrateJournal()]);
+  });
+
   it("stores ₹1,200.00 as integer 120000 and JSON-encodes it as a number", async () => {
     const { db, sql } = createDb(DATABASE_URL);
     try {
-      await migrateJournal(db);
+      await migrateJournal();
       const userId = `u_${randomUUID()}`;
       const groupId = `g_${randomUUID()}`;
       const categoryId = `c_${randomUUID()}`;
