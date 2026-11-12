@@ -10,33 +10,33 @@ Tracked against `apps/api`. **Done** means the route is wired in Hono (tests whe
 
 | Route | Status |
 | --- | --- |
-| `GET /auth/google` | Done |
-| `GET /auth/callback` | Done |
-| `POST /auth/sessions` | Done |
-| `DELETE /auth/session` | Done |
-| `GET /me` | Done |
-| `PATCH /me` | Done |
-| `GET /dashboard` | Done |
-| `GET /groups` | Done |
-| `POST /groups` | Done |
-| `POST /groups/:groupId/members` | Done |
-| `GET /groups/:groupId` | Done |
-| `GET /groups/:groupId/expenses` | Done |
-| `POST /groups/:groupId/expenses` | Done |
-| `GET /groups/:groupId/expenses/:expenseId` | Done |
-| `PUT /groups/:groupId/expenses/:expenseId` | Done |
-| `POST /groups/:groupId/expenses/:expenseId/void` | Done |
-| `POST /groups/:groupId/settlements` | — |
-| `GET /groups/:groupId/settlements/:settlementId` | — |
-| `PUT /groups/:groupId/settlements/:settlementId` | — |
-| `POST /groups/:groupId/settlements/:settlementId/void` | — |
-| `GET /groups/:groupId/settlements` | — |
-| `GET /groups/:groupId/balances` | — |
-| `GET /groups/:groupId/activity` | — |
-| `GET /groups/:groupId/summary` | — |
-| `GET /groups/:groupId/categories` | — |
-| `POST /groups/:groupId/categories` | — |
-| `PATCH /groups/:groupId/categories/:categoryId` | — |
+| [`GET /auth/google`](#get-authgoogle) | Done |
+| [`GET /auth/callback`](#get-authcallback) | Done |
+| [`POST /auth/sessions`](#post-authsessions) | Done |
+| [`DELETE /auth/session`](#delete-authsession) | Done |
+| [`GET /me`](#get-me) | Done |
+| [`PATCH /me`](#patch-me) | Done |
+| [`GET /dashboard`](#get-dashboard) | Done |
+| [`GET /groups`](#get-groups) | Done |
+| [`POST /groups`](#post-groups) | Done |
+| [`POST /groups/:groupId/members`](#post-groupsgroupidmembers) | Done |
+| [`GET /groups/:groupId`](#get-groupsgroupid) | Done |
+| [`GET /groups/:groupId/expenses`](#get-groupsgroupidexpenses) | Done |
+| [`POST /groups/:groupId/expenses`](#post-groupsgroupidexpenses) | Done |
+| [`GET /groups/:groupId/expenses/:expenseId`](#get-groupsgroupidexpensesexpenseid) | Done |
+| [`PUT /groups/:groupId/expenses/:expenseId`](#put-groupsgroupidexpensesexpenseid) | Done |
+| [`POST /groups/:groupId/expenses/:expenseId/void`](#post-groupsgroupidexpensesexpenseidvoid) | Done |
+| [`POST /groups/:groupId/settlements`](#post-groupsgroupidsettlements) | — |
+| [`GET /groups/:groupId/settlements/:settlementId`](#get-groupsgroupidsettlementssettlementid) | — |
+| [`PUT /groups/:groupId/settlements/:settlementId`](#put-groupsgroupidsettlementssettlementid) | — |
+| [`POST /groups/:groupId/settlements/:settlementId/void`](#post-groupsgroupidsettlementssettlementidvoid) | — |
+| [`GET /groups/:groupId/settlements`](#get-groupsgroupidsettlements) | — |
+| [`GET /groups/:groupId/balances`](#get-groupsgroupidbalances) | — |
+| [`GET /groups/:groupId/activity`](#get-groupsgroupidactivity) | — |
+| [`GET /groups/:groupId/summary`](#get-groupsgroupidsummary) | — |
+| [`GET /groups/:groupId/categories`](#get-groupsgroupidcategories) | — |
+| [`POST /groups/:groupId/categories`](#post-groupsgroupidcategories) | — |
+| [`PATCH /groups/:groupId/categories/:categoryId`](#patch-groupsgroupidcategoriescategoryid) | — |
 
 ## Conventions
 
