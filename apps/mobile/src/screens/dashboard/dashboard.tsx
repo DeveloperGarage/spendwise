@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo } from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { Redirect, useRouter, type Href } from 'expo-router';
 
@@ -11,20 +11,35 @@ import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
 import {Groups} from "@/components/group-list";
 import {SafeArea, PageHeader, ScreenContainer} from "@/custom-elements";
-
-
-
-const GREETING = 'Good evening';
-const NET_OWED = 2210;
-const NET_OWE = 650;
-
+import {loadDashBoardData} from "@/lib/api/dashboard";
+import {Dashboard} from "@/domain/models/dashboard";
 
 export function DashboardScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const me = useMe();
   const router = useRouter();
-  const net = NET_OWED - NET_OWE;
+
+  const onAddExpense = () => router.push('/add-expense' as Href);
+  const onSeeAll = () => { router.push('/groups' as Href) };
+
+  const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }, []);
+
+  useEffect(() => {
+    loadDashBoardData().then((data) => {
+      setDashboardData(data);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, []);
+
+  const net = dashboardData?.summary.net ?? 0;
 
   if (me.isPending) {
     return (
@@ -40,18 +55,20 @@ export function DashboardScreen() {
     return <Redirect href={'/profile' as Href} />;
   }
 
-  const onAddExpense = () => router.push('/add-expense' as Href);
-  const onSeeAll = () => { router.push('/groups' as Href) };
-
   return (
     <SafeArea>
       <ScreenContainer>
         <ScrollView
           showsVerticalScrollIndicator={false}>
+          {loading && (
+            <View style={styles.loading}>
+              <ActivityIndicator color={theme.primary} />
+            </View>
+          )}
           <PageHeader>
             <View style={styles.headerText}>
-              <Text style={styles.greeting}>{GREETING}</Text>
-              <Text style={styles.name}>{me.data.displayName}</Text>
+              <Text style={styles.greeting}>{greeting}</Text>
+              <Text style={styles.name}>{dashboardData?.user.displayName}</Text>
             </View>
             <View style={styles.avatar} />
           </PageHeader>
@@ -69,16 +86,16 @@ export function DashboardScreen() {
             <View style={styles.balanceBreakdown}>
               <View style={styles.balanceColumn}>
                 <Text style={styles.balanceColumnLabel}>You are owed</Text>
-                <Text style={styles.balanceColumnValue}>{formatRupees(NET_OWED)}</Text>
+                <Text style={styles.balanceColumnValue}>{formatRupees(dashboardData?.summary.owed ?? 0)}</Text>
               </View>
               <View style={styles.balanceColumn}>
                 <Text style={styles.balanceColumnLabel}>You owe</Text>
-                <Text style={styles.balanceColumnValue}>{formatRupees(NET_OWE)}</Text>
+                <Text style={styles.balanceColumnValue}>{formatRupees(dashboardData?.summary.owe ?? 0)}</Text>
               </View>
             </View>
           </LinearGradient>
 
-          <Groups userId={'user5'} onSeeAll={onSeeAll} />
+          <Groups groups={dashboardData?.groups ?? []} onSeeAll={onSeeAll} />
         </ScrollView>
 
         <View>

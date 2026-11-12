@@ -9,26 +9,10 @@ import {Group} from "@/domain/models/group";
 import {Member} from "@/domain/models/members";
 import {getMembersForGroup} from "@/lib/api/members";
 
-type GroupListProps = { userId: string, onSeeAll: () => void };
-
-const enrichMembersCount = (groups: Group[]) => {
-  return groups.map((group) => {
-    getMembersForGroup(group.id).then((members) => {
-      group.membersCount = members.length;
-    }).catch(console.error);
-    return group;
-  });
-}
-export function Groups ({userId, onSeeAll}: Readonly<GroupListProps>) {
+type GroupListProps = { groups: Group[], onSeeAll: () => void };
+export function Groups ({groups, onSeeAll}: Readonly<GroupListProps>) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [memebers, setMembers] = useState<Member[]>([]);
-
-  useEffect(() => {
-    getGroupsForUser(userId).then(enrichMembersCount).then(setGroups).catch(console.error);
-    // getMembersForGroup('someId').then().then(console.log).catch(console.error);
-  }, [userId]);
 
   return (
     <>

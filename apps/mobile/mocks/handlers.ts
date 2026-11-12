@@ -77,5 +77,13 @@ export const handlers = [
   http.get(`${API_URL}/groups/group/:groupId/members`, ({ params }) => {
     const groupId = params.groupId;
     return HttpResponse.json(membersFactory({ groupId }));
-  })
+  }),
+
+  http.get(`${API_URL}/dashboard`, () => {
+    return HttpResponse.json({
+      user: { id: 'mock-user-1', displayName: 'Mock User' },
+      summary: { currency: 'INR', net: 1560, owed: 2210, owe: 650 },
+      groups: groupsFactory({ userId: 'mock-user-1' }, 2),
+    });
+  }),
 ];
