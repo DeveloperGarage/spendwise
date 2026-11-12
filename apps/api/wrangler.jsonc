@@ -30,7 +30,7 @@
 	"hyperdrive": [
 		{
 			"binding": "HYPERDRIVE",
-			"id": "d86bdc23db2e46769184a37302ce2bf1",
+			"id": "91c13f3da78b43e490047cc6dae47e1f",
 			"localConnectionString": "postgres://spendwise:spendwise@localhost:5432/spendwise",
 		},
 	],
