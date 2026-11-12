@@ -1,23 +1,15 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { ComponentRef, useMemo, useRef, useState } from 'react';
+import {Pressable, ScrollView, Text, TextInput, View} from 'react-native';
+import {useRouter} from 'expo-router';
 
-import { Button } from '@/components/button';
-import { TextButton } from '@/components/text-button';
-import { PageHeader, SafeArea, ScreenContainer } from '@/custom-elements';
-import { useTheme } from '@/hooks/use-theme';
-import { createStyles } from './add-group.styles';
+import {Button} from '@/components/button';
+import {TextButton} from '@/components/text-button';
+import {PageHeader, SafeArea, ScreenContainer} from '@/custom-elements';
+import {useTheme} from '@/hooks/use-theme';
+import {createStyles} from './add-group.styles';
+import {createGroup} from "@/lib/api/groups";
 
 type DraftMember = { id: string; displayName: string };
-
-// Stand-in directory until a real member picker / contacts lookup exists.
-const MEMBER_POOL: DraftMember[] = [
-  { id: 'you', displayName: 'You' },
-  { id: 'riya', displayName: 'Riya' },
-  { id: 'sam', displayName: 'Sam' },
-  { id: 'dev', displayName: 'Dev' },
-  { id: 'ana', displayName: 'Ana' },
-];
 
 export function AddGroupScreen() {
   const theme = useTheme();
@@ -26,14 +18,25 @@ export function AddGroupScreen() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [members, setMembers] = useState<DraftMember[]>([MEMBER_POOL[0]]);
+  const [email, setEmail] = useState('');
+  const [members, setMembers] = useState<DraftMember[]>([]);
+  const emailInputRef = useRef<ComponentRef<typeof TextInput>>(null);
 
   const onCancel = () => router.back();
 
-  // TODO: open a real member picker; for now cycle through the stand-in pool.
-  const onAddMember = () => {
-    const next = MEMBER_POOL.find((candidate) => !members.some((m) => m.id === candidate.id));
-    if (next) setMembers((prev) => [...prev, next]);
+  const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+  const onAddEmail = () => {
+    const normalized = email.trim().toLowerCase();
+    if (!isValidEmail(normalized)) return;
+    if (members.some((m) => m.id === normalized)) {
+      setEmail('');
+      emailInputRef.current?.focus();
+      return;
+    }
+    setMembers((prev) => [...prev, {id: normalized, displayName: normalized}]);
+    setEmail('');
+    emailInputRef.current?.focus();
   };
 
   const onRemoveMember = (id: string) => {
@@ -41,9 +44,17 @@ export function AddGroupScreen() {
   };
 
   const onCreate = () => {
-    // TODO: persist the group (name, description, members), then navigate to it.
-    router.back();
+    const groupData = {
+      name: name.trim(),
+      memberEmails: members.map((m) => m.id),
+    };
+
+    createGroup(groupData).then(() => {
+      router.push('/dashboard');
+    }).catch(console.error);
   };
+
+  const validCreation =  name.trim() && members.length > 1;
 
   return (
     <SafeArea>
@@ -58,7 +69,7 @@ export function AddGroupScreen() {
               <Text style={styles.backChevron}>‹</Text>
               <Text style={styles.headerTitle}>Create Group</Text>
             </Pressable>
-            <TextButton onPress={onCancel} text="Cancel" />
+            <TextButton onPress={onCancel} text="Cancel"/>
           </PageHeader>
 
           <View style={styles.fieldBlock}>
@@ -84,35 +95,59 @@ export function AddGroupScreen() {
           </View>
 
           <Text style={styles.sectionLabel}>Members</Text>
-          <View style={styles.membersCard}>
-            {members.length === 0 ? (
-              <Text style={styles.membersEmpty}>No members yet.</Text>
-            ) : (
-              members.map((member, index) => (
-                <View
-                  key={member.id}
-                  style={[styles.memberRow, index > 0 && styles.memberRowDivider]}>
-                  <View style={styles.memberAvatar}>
-                    <Text style={styles.memberAvatarText}>{member.displayName.charAt(0)}</Text>
-                  </View>
-                  <Text style={styles.memberName}>{member.displayName}</Text>
-                  <Pressable
-                    onPress={() => onRemoveMember(member.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove ${member.displayName}`}
-                    hitSlop={8}>
-                    <Text style={styles.memberRemove}>×</Text>
-                  </Pressable>
-                </View>
-              ))
-            )}
+          {members.length > 0 && ( <View style={styles.membersCard}>
+          {members.map((member, index) => (
+            <View
+              key={member.id}
+              style={[styles.memberRow, index > 0 && styles.memberRowDivider]}>
+              <View style={styles.memberAvatar}>
+                <Text style={styles.memberAvatarText}>{member.displayName.charAt(0)}</Text>
+              </View>
+              <Text style={styles.memberName}>{member.displayName}</Text>
+              <Pressable
+                onPress={() => onRemoveMember(member.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${member.displayName}`}
+                hitSlop={8}>
+                <Text style={styles.memberRemove}>×</Text>
+              </Pressable>
+            </View>
+          ))
+          }
+        </View>)
+          }
+          <View style={styles.emailRow}>
+            <TextInput
+              ref={emailInputRef}
+              style={[styles.input, styles.emailInput]}
+              value={email}
+              onChangeText={setEmail}
+              onSubmitEditing={onAddEmail}
+              placeholder="Enter email addresses to add members"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              blurOnSubmit={false}
+            />
+            <Pressable
+              onPress={onAddEmail}
+              disabled={!isValidEmail(email)}
+              accessibilityRole="button"
+              accessibilityLabel="Add member by email"
+              style={({pressed}) => [
+                styles.confirmButton,
+                !isValidEmail(email) && styles.confirmButtonDisabled,
+                pressed && styles.pressed,
+              ]}>
+              <Text style={styles.confirmButtonText}>→</Text>
+            </Pressable>
           </View>
-
-          <Button label="+ Add Member" onPress={onAddMember} />
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label="Create Group" onPress={onCreate} disabled={!name.trim()} />
+          <Button label="Create Group" onPress={onCreate} disabled={!validCreation}/>
         </View>
       </ScreenContainer>
     </SafeArea>

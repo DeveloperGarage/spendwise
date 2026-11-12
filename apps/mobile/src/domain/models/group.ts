@@ -11,3 +11,8 @@ export type Group = {
   balance: number;
   members: GroupMember[];
 };
+
+export type POST_GROUP = {
+  name: string;
+  memberEmails: string[];
+};

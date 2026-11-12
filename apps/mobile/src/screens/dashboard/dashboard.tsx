@@ -21,6 +21,7 @@ export function DashboardScreen() {
   const router = useRouter();
 
   const onAddExpense = () => router.push('/add-expense' as Href);
+  const onAddGroup = () => router.push('/add-group' as Href);
   const onSeeAll = () => { router.push('/groups' as Href) };
 
   const [dashboardData, setDashboardData] = useState<Dashboard | null>(null);
@@ -55,6 +56,10 @@ export function DashboardScreen() {
     return <Redirect href={'/profile' as Href} />;
   }
 
+  const actionButton = ()  =>
+    dashboardData?.groups.length === 0 ?
+      <Button label={"Create Group"} onPress={onAddGroup} />:
+      <Button label="+ Add expense" onPress={onAddExpense} /> ;
   return (
     <SafeArea>
       <ScreenContainer>
@@ -62,7 +67,7 @@ export function DashboardScreen() {
           showsVerticalScrollIndicator={false}>
           {loading && (
             <View style={styles.loading}>
-              <ActivityIndicator color={theme.primary} />
+              <ActivityIndicator color={theme.primary}/>
             </View>
           )}
           <PageHeader>
@@ -70,13 +75,13 @@ export function DashboardScreen() {
               <Text style={styles.greeting}>{greeting}</Text>
               <Text style={styles.name}>{dashboardData?.user.displayName}</Text>
             </View>
-            <View style={styles.avatar} />
+            <View style={styles.avatar}/>
           </PageHeader>
 
           <LinearGradient
             colors={BRAND_GRADIENT}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
             style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>NET BALANCE</Text>
             <Text style={styles.balanceValue}>
@@ -95,11 +100,11 @@ export function DashboardScreen() {
             </View>
           </LinearGradient>
 
-          <Groups groups={dashboardData?.groups ?? []} onSeeAll={onSeeAll} />
+          <Groups groups={dashboardData?.groups ?? []} onSeeAll={onSeeAll}/>
         </ScrollView>
 
         <View>
-          <Button label="+ Add expense" onPress={onAddExpense} />
+          {actionButton()}
         </View>
       </ScreenContainer>
     </SafeArea>

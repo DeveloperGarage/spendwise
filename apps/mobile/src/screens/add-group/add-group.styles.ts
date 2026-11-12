@@ -95,6 +95,31 @@ export const createStyles = (theme: Theme) =>
       paddingVertical: Spacing.xl,
     },
 
+    // ----- Email member input -----
+    emailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    emailInput: {
+      flex: 1,
+    },
+    confirmButton: {
+      width: Sizes.buttonHeight,
+      height: Sizes.buttonHeight,
+      borderRadius: Radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: theme.primary,
+    },
+    confirmButtonDisabled: {
+      opacity: Opacity.disabled,
+    },
+    confirmButtonText: {
+      ...Typography.heading,
+      color: theme.primaryText,
+    },
+
     // ----- Footer -----
     footer: {
       paddingTop: Spacing.md,

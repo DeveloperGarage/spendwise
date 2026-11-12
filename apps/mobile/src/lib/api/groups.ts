@@ -1,4 +1,4 @@
-import {Group} from "@/domain/models/group";
+import {Group, POST_GROUP} from "@/domain/models/group";
 import {Expense} from "@/domain/models/expense";
 import {request} from "@/lib/api/clients";
 
@@ -10,3 +10,9 @@ export const getGroupById = (groupId: string) =>
 
 export const getExpensesForGroup = (groupId: string) =>
   request<Expense[]>('/groups/group/' + groupId + '/expenses');
+
+export const createGroup = (group: POST_GROUP) =>
+  request<Group>('/groups', {
+    method: 'POST',
+    body: JSON.stringify(group),
+  });

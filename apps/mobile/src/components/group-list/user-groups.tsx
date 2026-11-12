@@ -8,6 +8,7 @@ import {getGroupsForUser} from "@/lib/api/groups";
 import {Group} from "@/domain/models/group";
 import {Member} from "@/domain/models/members";
 import {getMembersForGroup} from "@/lib/api/members";
+import {Button} from "@/components/button";
 
 type GroupListProps = { groups: Group[], onSeeAll: () => void };
 export function Groups ({groups, onSeeAll}: Readonly<GroupListProps>) {

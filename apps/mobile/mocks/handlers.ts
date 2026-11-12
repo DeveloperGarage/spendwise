@@ -86,4 +86,8 @@ export const handlers = [
       groups: groupsFactory({ userId: 'mock-user-1' }, 2),
     });
   }),
+
+  http.post(`${API_URL}/groups`, async ({ request }) => {
+    return new HttpResponse(null, { status: 201 });
+  })
 ];
