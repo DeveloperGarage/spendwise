@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import {Radius, Sizes, Spacing, Theme, Typography} from "@/constants/theme";
+import {Opacity, Radius, Sizes, Spacing, Theme, Typography} from "@/constants/theme";
 
 export const createStyles = (theme: Theme) =>
   StyleSheet.create({
@@ -34,5 +34,8 @@ export const createStyles = (theme: Theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       color: theme.primaryText,
+    },
+    pressed: {
+      opacity: Opacity.pressed,
     },
   })

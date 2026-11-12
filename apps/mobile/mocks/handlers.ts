@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
 
 import {Me, request} from '@/lib/api/clients';
-import {groupsFactory} from "./factories";
+import {groupsFactory, expensesFactory, membersFactory} from "./factories";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const STORAGE_KEY = 'spendwise.mock.session';
@@ -60,6 +60,22 @@ export const handlers = [
   }),
 
   http.get(`${API_URL}/groups/:userId`, ({ params }) => {
-    return HttpResponse.json(groupsFactory({ userId: params.userId, count: 10 }));
+    return HttpResponse.json(groupsFactory({ userId: params.userId }, 10));
+  }),
+
+  http.get(`${API_URL}/groups/group/:groupId`, ({ params }) => {
+    const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId;
+    const group = (groupsFactory({ userId: 'mock-user-1', id: groupId, name: groupId.split('-').join(' ') }, 1)[0]);
+    return HttpResponse.json(group);
+  }),
+
+  http.get(`${API_URL}/groups/group/:groupId/expenses`, ({ params }) => {
+    const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId;
+    return HttpResponse.json(expensesFactory({ groupId }));
+  }),
+
+  http.get(`${API_URL}/groups/group/:groupId/members`, ({ params }) => {
+    const groupId = params.groupId;
+    return HttpResponse.json(membersFactory({ groupId }));
   })
 ];

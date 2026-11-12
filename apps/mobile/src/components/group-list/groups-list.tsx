@@ -3,12 +3,14 @@ import {formatRupees} from "@/lib/money";
 import {useTheme} from "@/hooks/use-theme";
 import {useMemo} from "react";
 import { createStyles } from "./gropus-list.styles";
-import {Group} from "@/domain/models/groups";
+import {Group} from "@/domain/models/group";
+import {Href, router} from "expo-router";
 
-const onOpenGroup = (_id: string) => { /* TODO: navigate to the group detail */ };
+const onOpenGroup = (id: string) => { router.push(`/view-group/${id}` as Href) };
 export function GroupsList({groups, limit}: Readonly<{ groups: Group[], limit: number }>) {
   const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const styles = useMemo(() =>
+    createStyles(theme), [theme]);
 
 
   return (
@@ -20,7 +22,8 @@ export function GroupsList({groups, limit}: Readonly<{ groups: Group[], limit: n
             key={group.id}
             onPress={() => onOpenGroup(group.id)}
             accessibilityRole="button"
-            style={({pressed}) => [styles.groupCard, pressed && styles.pressed]}>
+            style={({pressed}) =>
+              [styles.groupCard, pressed && styles.pressed]}>
             <View style={styles.groupAvatar}>
               <Text style={styles.groupAvatarText}>
                 {group.name.charAt(0)}
@@ -30,7 +33,7 @@ export function GroupsList({groups, limit}: Readonly<{ groups: Group[], limit: n
             <View style={styles.groupInfo}>
               <Text style={styles.groupName}>{group.name}</Text>
               <Text style={styles.groupMembers}>
-                {group.members} people
+                {group.membersCount} people
               </Text>
             </View>
 

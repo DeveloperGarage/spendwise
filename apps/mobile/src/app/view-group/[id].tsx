@@ -1,0 +1,1 @@
+export {ViewGroupScreen as default} from '@/screens/view-group/view-group';
