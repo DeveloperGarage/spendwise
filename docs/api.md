@@ -21,8 +21,8 @@ Tracked against `apps/api`. **Done** means the route is wired in Hono (tests whe
 | `POST /groups` | Done |
 | `POST /groups/:groupId/members` | Done |
 | `GET /groups/:groupId` | Done |
-| `GET /groups/:groupId/expenses` | — |
-| `POST /groups/:groupId/expenses` | — |
+| `GET /groups/:groupId/expenses` | Done |
+| `POST /groups/:groupId/expenses` | Done |
 | `GET /groups/:groupId/expenses/:expenseId` | — |
 | `PUT /groups/:groupId/expenses/:expenseId` | — |
 | `POST /groups/:groupId/expenses/:expenseId/void` | — |
@@ -217,7 +217,7 @@ Member `email` is returned so the client can show who is in the trip without a s
 
 ## Expenses
 
-_Not implemented._
+_Done: list and create. Edit, void, and the other expense routes are not implemented._
 
 ### GET /groups/:groupId/expenses
 

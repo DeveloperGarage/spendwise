@@ -47,7 +47,7 @@ export function createApp(db: Database, authOptions: AuthOptions = {}) {
     cors({
       origin: auth.appOrigin,
       credentials: true,
-      allowHeaders: ["Content-Type"],
+      allowHeaders: ["Content-Type", "Idempotency-Key"],
       allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     }),
   );

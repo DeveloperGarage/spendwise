@@ -6,6 +6,7 @@ import { SESSION_COOKIE, userFromSessionCookie } from "../auth.ts";
 import type { AppEnv, SessionUser } from "../app-env.ts";
 import type { Database } from "../db/client.ts";
 import { errorBody } from "../errors.ts";
+import { registerExpenseRoutes } from "../expenses/routes.ts";
 import {
   addGroupMembers,
   createGroup,
@@ -128,6 +129,8 @@ export function mountGroupRoutes(db: Database) {
     }
     return c.json(result.group, 201);
   });
+
+  registerExpenseRoutes(groups, db);
 
   return groups;
 }

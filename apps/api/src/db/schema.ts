@@ -109,6 +109,26 @@ export const expenseFundingLines = pgTable("expense_funding_lines", {
   accountId: text("account_id"),
 });
 
+export const expenseIdempotency = pgTable(
+  "expense_idempotency",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => groups.id),
+    idempotencyKey: text("idempotency_key").notNull(),
+    expenseId: text("expense_id")
+      .notNull()
+      .references(() => expenses.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.groupId, table.idempotencyKey] }),
+  ],
+);
+
 export const expenseAllocationLines = pgTable("expense_allocation_lines", {
   id: text("id").primaryKey(),
   expenseId: text("expense_id")

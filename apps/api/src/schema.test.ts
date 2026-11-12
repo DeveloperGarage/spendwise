@@ -32,6 +32,7 @@ describe("journal migration", () => {
         "categories",
         "expense_allocation_lines",
         "expense_funding_lines",
+        "expense_idempotency",
         "expenses",
         "group_invites",
         "groups",
