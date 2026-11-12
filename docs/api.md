@@ -1,6 +1,6 @@
 # Spendwise API
 
-Status: planning baseline. 9 November 2026.
+Status: planning baseline. 9 November 2026. Amended 12 November 2026 (group membership by email; invite URLs deferred).
 
 Phase 1 HTTP contract. The caller is the session. A group is the shared aggregate. Money rules are in [domain-model.md](domain-model.md). The system those routes sit in is [architecture.md](architecture.md). The host that serves these routes is [0008](adr/0008-cloudflare-and-supabase.md).
 
@@ -118,13 +118,43 @@ Across the caller's groups:
 
 The Groups screen. The same card as `dashboard.groups`, the full list, and no `summary` object.
 
-### POST /groups
-
 ```json
-{ "name": "Goa Trip" }
+{
+  "groups": [
+    { "id": "g_goa", "name": "Goa Trip", "memberCount": 4, "balance": 156000 },
+    { "id": "g_flat", "name": "Flat 203", "memberCount": 3, "balance": -42000 }
+  ]
+}
 ```
 
-`201` and the group. The caller becomes a member. `currency` is `INR`. The seven seed categories are Food, Stay, Transport, Activities, Shopping, Groceries, and Other.
+### POST /groups
+
+Creates a group in one transaction. The caller becomes a member. `currency` is `INR`. The seven seed categories are Food, Stay, Transport, Activities, Shopping, Groceries, and Other.
+
+Phase 1 adds people by **email**, not invite links. Each address must belong to someone who has already signed in (`public.users`). The email must also be on `allowed_emails`, the same gate as Google sign-in.
+
+```json
+{
+  "name": "Goa Trip",
+  "memberEmails": ["riya@gmail.com", "sam@gmail.com"]
+}
+```
+
+`name` is required. `memberEmails` is optional. Addresses are normalized to lowercase. The caller's own email and duplicates in the array are ignored. If any remaining address has no matching `users` row, or is not allowlisted, the request is `422 VALIDATION_FAILED` with `details.field` set to `memberEmails` and no group is created.
+
+`201` and the group body (same shape as `GET /groups/:groupId`).
+
+### POST /groups/:groupId/members
+
+Any current member may add people by email. Uses the same `memberEmails` field as create so one person or several share one validation path and one transaction.
+
+```json
+{ "memberEmails": ["sam@gmail.com", "mira@gmail.com"] }
+```
+
+`memberEmails` is required and non-empty after trimming. Same rules as on create: lowercase, must exist in `users`, must be on `allowed_emails`. The caller's own email, duplicates in the array, and addresses already in the group are ignored. If every address is skipped and nobody new would join, `422 VALIDATION_FAILED` with `details.field` = `memberEmails`. If any remaining address fails lookup or allowlist, nothing is written and the response is `422` with `details.field` = `memberEmails`.
+
+`201` and the full group body (same shape as `GET /groups/:groupId`) after the new memberships commit.
 
 ### GET /groups/:groupId
 
@@ -137,11 +167,13 @@ Header for the group screen. Members are embedded. Phase 1 has no route that rem
   "currency": "INR",
   "balance": 156000,
   "members": [
-    { "id": "u_1", "displayName": "Aman" },
-    { "id": "u_2", "displayName": "Riya" }
+    { "id": "u_1", "displayName": "Aman", "email": "aman@gmail.com" },
+    { "id": "u_2", "displayName": "Riya", "email": "riya@gmail.com" }
   ]
 }
 ```
+
+Member `email` is returned so the client can show who is in the trip without a separate directory.
 
 ## Expenses
 
@@ -279,25 +311,9 @@ Trip totals. Live expenses the list has scrolled past are included. Voided rows 
 }
 ```
 
-## Invites and categories
+## Categories
 
-The product plan includes these. The six v1 frames do not draw them yet.
-
-### GET /groups/:groupId/invite
-
-```json
-{ "url": "https://spendwise.example/join/TOKEN" }
-```
-
-Any member may read it. The token is unguessable.
-
-### POST /groups/:groupId/invite/rotations
-
-`200` and the new invite. The previous link stops working.
-
-### POST /invites/:token/accept
-
-Session required. `201` and the group. Creates the membership.
+Category routes are not wired in the first client frames. They are still part of Phase 1 on the API; create group seeds the defaults.
 
 ### GET /groups/:groupId/categories
 
@@ -326,8 +342,10 @@ The renamed category. This is a real partial update. An expense edit is a full r
 | `SPLIT_REFUSED` | 422 | Exact or percentage totals miss. `details.gap` is the missing or extra amount, or the percentage gap in hundredths. |
 | `VERSION_CONFLICT` | 409 | The `version` is stale. Nothing is written. |
 | `VOIDED` | 409 | The row is already voided. |
-| `VALIDATION_FAILED` | 422 | The body is wrong. `details` names the field. A category on a settlement lands here. |
+| `VALIDATION_FAILED` | 422 | The body is wrong. `details` names the field. A category on a settlement lands here. Unknown or never-signed-in addresses on `memberEmails` (create group or add members) land here with `details.field` = `memberEmails`. |
 
 ## Later phases
 
 Personal expenses, when they arrive, are this same expense with an account, not a second collection under the user. Income, own-account transfers, card-bill payments, and refunds are further entry types. They are not optional fields on an expense or a settlement.
+
+**Invite links (deferred).** The journal still has `group_invites` for a possible later flow. Phase 1 beta uses email add on `POST /groups` and `POST /groups/:groupId/members` instead of `GET /groups/:groupId/invite`, `POST /groups/:groupId/invite/rotations`, or `POST /invites/:token/accept`.

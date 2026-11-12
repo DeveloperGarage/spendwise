@@ -59,9 +59,8 @@ All of these require a session except starting Google OAuth and completing it.
 | Sign in with Google | Allowlisted email only. Creates `auth.users` on first success. |
 | Confirm display name | First-open form. `PATCH /me`. Prefills the Google name. |
 | Dashboard | Caller name, net, owed, owe, and one balance per group. Computed. See [api.md](api.md). |
-| Create group | Caller becomes a member. Seeds the seven categories. |
-| Read or rotate invite link | Any member. The token is unguessable. |
-| Join with invite | Creates a membership. |
+| Create group | Caller becomes a member. Optional `memberEmails` on create. Seeds the seven categories. |
+| Add member by email | On create or `POST /groups/:groupId/members`. Target must be on `allowed_emails` and already in `public.users`. |
 | List members and categories | Members only. |
 | Create expense | One payer. Split mode as in the domain model. |
 | Edit expense | Any member. Sends the version it read. |
@@ -111,7 +110,7 @@ A database trigger that restates the zero-sum check can wait. The transaction is
 - A session identifies one user.
 - Group data is readable and writable by current members only.
 - There is no public directory of groups.
-- The invite token is the only way in. Any member can rotate it, which invalidates the previous link.
+- New members join when an existing member adds their email. Invite links are deferred; `group_invites` stays in the schema for a later phase.
 - Phase 1 does not support leaving a group. Everyone who joins stays through the trip, including in the balances.
 
 Sessions are opaque tokens stored on the server. The PWA uses an httpOnly, Secure cookie set by the API, and sends requests with credentials. The browser and the API share the Worker origin, so the cookie does not cross a site.

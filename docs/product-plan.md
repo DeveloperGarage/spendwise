@@ -38,7 +38,7 @@ The add screen is the same action for a personal expense and a group expense. In
 
 A group can leave Splitwise for this trip.
 
-- Google sign-in for allowlisted emails. First-open display name. Groups. An invite link. The client is a PWA on any device.
+- Google sign-in for allowlisted emails. First-open display name. Groups. The creator (or any member) adds people by email who have already signed in. No invite link in the beta. The client is a PWA on any device.
 - Add, edit, and void an expense. Any member can correct an entry. Void keeps the row and drops it from the balances. An activity list shows who changed what.
 - Split equally, by exact amounts, by percentage, or by shares. One payer per expense.
 - Flat categories the group can rename and extend: Food, Stay, Transport, Activities, Shopping, Groceries, Other.
