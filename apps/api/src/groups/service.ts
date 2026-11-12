@@ -60,6 +60,17 @@ async function membersForGroup(db: Database, groupId: string): Promise<GroupMemb
   return rows;
 }
 
+export async function listGroupMembers(
+  db: Database,
+  groupId: string,
+  callerId: string,
+): Promise<GroupMemberJson[] | null> {
+  const [group] = await db.select({ id: groups.id }).from(groups).where(eq(groups.id, groupId));
+  if (!group) return null;
+  if (!(await isGroupMember(db, groupId, callerId))) return null;
+  return membersForGroup(db, groupId);
+}
+
 export async function getGroupDetail(
   db: Database,
   groupId: string,

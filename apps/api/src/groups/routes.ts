@@ -14,6 +14,7 @@ import {
   getGroupDetail,
   isGroupMember,
   listGroupCards,
+  listGroupMembers,
 } from "./service.ts";
 
 async function requireSession(
@@ -87,6 +88,20 @@ export function mountGroupRoutes(db: Database) {
       );
     }
     return c.json(detail);
+  });
+
+  groups.get("/groups/:groupId/members", async (c) => {
+    const user = await requireSession(c, db);
+    if (user instanceof Response) return user;
+    const groupId = c.req.param("groupId");
+    const members = await listGroupMembers(db, groupId, user.id);
+    if (!members) {
+      return c.json(
+        errorBody("NOT_FOUND", "Group not found.", c.get("requestId")),
+        404,
+      );
+    }
+    return c.json({ members });
   });
 
   groups.post("/groups/:groupId/members", async (c) => {

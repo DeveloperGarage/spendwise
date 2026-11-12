@@ -66,6 +66,12 @@ describe("groups and dashboard", { skip: !hasPostgres }, () => {
       assert.equal(group.balance, 0);
       assert.equal(group.members.length, 2);
 
+      const memberList = await app.request(`/groups/${group.id}/members`, { headers: { cookie } });
+      assert.equal(memberList.status, 200);
+      const listed = (await memberList.json()) as { members: { email: string; displayName: string }[] };
+      assert.equal(listed.members.length, 2);
+      assert.ok(listed.members.some((member) => member.email === otherEmail));
+
       const seeded = await db.select().from(categories).where(eq(categories.groupId, group.id));
       assert.equal(seeded.length, SEED_CATEGORY_NAMES.length);
 
@@ -158,6 +164,8 @@ describe("groups and dashboard", { skip: !hasPostgres }, () => {
 
       const res = await app.request(`/groups/${groupId}`, { headers: { cookie } });
       assert.equal(res.status, 404);
+      const members = await app.request(`/groups/${groupId}/members`, { headers: { cookie } });
+      assert.equal(members.status, 404);
     } finally {
       await sql.end({ timeout: 5 });
     }

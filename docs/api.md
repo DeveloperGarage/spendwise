@@ -19,6 +19,7 @@ Tracked against `apps/api`. **Done** means the route is wired in Hono (tests whe
 | [`GET /dashboard`](#get-dashboard) | Done |
 | [`GET /groups`](#get-groups) | Done |
 | [`POST /groups`](#post-groups) | Done |
+| [`GET /groups/:groupId/members`](#get-groupsgroupidmembers) | Done |
 | [`POST /groups/:groupId/members`](#post-groupsgroupidmembers) | Done |
 | [`GET /groups/:groupId`](#get-groupsgroupid) | Done |
 | [`GET /groups/:groupId/expenses`](#get-groupsgroupidexpenses) | Done |
@@ -152,7 +153,7 @@ Across the caller's groups:
 
 ## Groups
 
-_Done: list, create, add members, and group detail._
+_Done: list, create, add members, member list, and group detail._
 
 ### GET /groups
 
@@ -183,6 +184,21 @@ Phase 1 adds people by **email**, not invite links. Each address must belong to 
 `name` is required. `memberEmails` is optional. Addresses are normalized to lowercase. The caller's own email and duplicates in the array are ignored. If any remaining address has no matching `users` row, or is not allowlisted, the request is `422 VALIDATION_FAILED` with `details.field` set to `memberEmails` and no group is created.
 
 `201` and the group body (same shape as `GET /groups/:groupId`).
+
+### GET /groups/:groupId/members
+
+The member directory for one group, without the balance or category work on `GET /groups/:groupId`. Same people as `members` on the group body, ordered by display name.
+
+```json
+{
+  "members": [
+    { "id": "u_1", "displayName": "Aman", "email": "aman@gmail.com" },
+    { "id": "u_2", "displayName": "Riya", "email": "riya@gmail.com" }
+  ]
+}
+```
+
+A caller who is not in the group gets `404`.
 
 ### POST /groups/:groupId/members
 
