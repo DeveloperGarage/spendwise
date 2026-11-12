@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { eq, sql } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { cors } from "hono/cors";
@@ -29,20 +31,17 @@ import {
 } from "./auth.ts";
 import type { Database } from "./db/client.ts";
 import { sessions, users } from "./db/schema.ts";
+import type { AppEnv } from "./app-env.ts";
 import { errorBody } from "./errors.ts";
+import { mountGroupRoutes } from "./groups/routes.ts";
 
-export type AppEnv = {
-  Variables: {
-    db: Database;
-    auth: AuthConfig;
-  };
-};
+export type { AppEnv } from "./app-env.ts";
 
 export function createApp(db: Database, authOptions: AuthOptions = {}) {
   const auth = authFromEnv(authOptions);
   const app = new Hono<AppEnv>();
 
-  app.use("*", requestId());
+  app.use("*", requestId({ generator: () => randomUUID() }));
   app.use(
     "*",
     cors({
@@ -193,6 +192,8 @@ export function createApp(db: Database, authOptions: AuthOptions = {}) {
       .returning();
     return c.json(toMeUser(updated));
   });
+
+  app.route("/", mountGroupRoutes(db));
 
   return app;
 }
