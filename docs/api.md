@@ -1,8 +1,42 @@
 # Spendwise API
 
-Status: planning baseline. 9 November 2026. Amended 12 November 2026 (group membership by email; invite URLs deferred).
+Status: Phase 1 contract plus live implementation tracking. Baseline 9 November 2026. Amended 12 November 2026 (group membership by email; invite URLs deferred). Implementation column updated 13 November 2026.
 
 Phase 1 HTTP contract. The caller is the session. A group is the shared aggregate. Money rules are in [domain-model.md](domain-model.md). The system those routes sit in is [architecture.md](architecture.md). The host that serves these routes is [0008](adr/0008-cloudflare-and-supabase.md).
+
+## Route implementation
+
+Tracked against `apps/api`. **Done** means the route is wired in Hono (tests where we have them). **—** means contract only for now. Update this table as each slice ships.
+
+| Route | Status |
+| --- | --- |
+| `GET /auth/google` | Done |
+| `GET /auth/callback` | Done |
+| `POST /auth/sessions` | Done |
+| `DELETE /auth/session` | Done |
+| `GET /me` | Done |
+| `PATCH /me` | Done |
+| `GET /dashboard` | Done |
+| `GET /groups` | Done |
+| `POST /groups` | Done |
+| `POST /groups/:groupId/members` | Done |
+| `GET /groups/:groupId` | Done |
+| `GET /groups/:groupId/expenses` | — |
+| `POST /groups/:groupId/expenses` | — |
+| `GET /groups/:groupId/expenses/:expenseId` | — |
+| `PUT /groups/:groupId/expenses/:expenseId` | — |
+| `POST /groups/:groupId/expenses/:expenseId/void` | — |
+| `POST /groups/:groupId/settlements` | — |
+| `GET /groups/:groupId/settlements/:settlementId` | — |
+| `PUT /groups/:groupId/settlements/:settlementId` | — |
+| `POST /groups/:groupId/settlements/:settlementId/void` | — |
+| `GET /groups/:groupId/settlements` | — |
+| `GET /groups/:groupId/balances` | — |
+| `GET /groups/:groupId/activity` | — |
+| `GET /groups/:groupId/summary` | — |
+| `GET /groups/:groupId/categories` | — |
+| `POST /groups/:groupId/categories` | — |
+| `PATCH /groups/:groupId/categories/:categoryId` | — |
 
 ## Conventions
 
@@ -29,6 +63,8 @@ Errors are one shape.
 ```
 
 ## Auth
+
+_All routes in this section: **Done**._
 
 Sign-in is Google OAuth only, gated by `allowed_emails`. Email/password and magic link stay off. The Before User Created hook rejects a Google account whose email is not on the list, so no `auth.users` row is created. Hono checks the same table before writing `public.users` and the opaque session.
 
@@ -82,6 +118,8 @@ Response is the `GET /me` body with `profileCompleted: true`. This is the only u
 
 ## Dashboard
 
+_Done: `GET /dashboard`._
+
 ### GET /dashboard
 
 The launch screen: greeting, the three headline figures, and the group cards. Computed on read from live rows. Phase 1 is one currency, `INR`.
@@ -113,6 +151,8 @@ Across the caller's groups:
 - A settled group contributes nothing to `owed` or `owe`.
 
 ## Groups
+
+_Done: list, create, add members, and group detail._
 
 ### GET /groups
 
@@ -176,6 +216,8 @@ Header for the group screen. Members are embedded. Phase 1 has no route that rem
 Member `email` is returned so the client can show who is in the trip without a separate directory.
 
 ## Expenses
+
+_Not implemented._
 
 ### GET /groups/:groupId/expenses
 
@@ -244,6 +286,8 @@ Replaces the expense. The body is the create body plus `version`.
 
 ## Settlements
 
+_Not implemented._
+
 A settlement is its own collection. It has an `amount`, a sender, and a recipient. It has no category. A category field on the body is `422 VALIDATION_FAILED`.
 
 ### POST /groups/:groupId/settlements
@@ -277,6 +321,8 @@ Same terminal rule as an expense.
 Newest first, for a later list. The group screen's Expenses tab is expenses only. Settlements appear on Activity and inside Balances.
 
 ## Balances, activity, summary
+
+_Not implemented._
 
 ### GET /groups/:groupId/balances
 
@@ -312,6 +358,8 @@ Trip totals. Live expenses the list has scrolled past are included. Voided rows 
 ```
 
 ## Categories
+
+_Not implemented_ (seed categories on `POST /groups` are **Done**).
 
 Category routes are not wired in the first client frames. They are still part of Phase 1 on the API; create group seeds the defaults.
 
