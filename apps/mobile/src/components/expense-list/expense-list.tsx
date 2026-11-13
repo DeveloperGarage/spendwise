@@ -2,14 +2,20 @@ import { Pressable, Text, View } from 'react-native';
 import { useMemo } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
-import { formatRupees } from '@/lib/money';
+import { formatRupees, groupIndian } from '@/lib/money';
 import { Expense } from '@/domain/models/expense';
 import { createStyles } from './expense-list.styles';
 
 type ExpenseListProps = Readonly<{
   expenses: Expense[];
-  onOpenExpense?: (index: number) => void;
+  onOpenExpense?: (id: string) => void;
 }>;
+
+function relation(net: number) {
+  if (net > 0) return { label: 'you lent', tone: 'amountPositive' as const };
+  if (net < 0) return { label: 'you owe', tone: 'amountNegative' as const };
+  return { label: 'settled', tone: 'amountSettled' as const };
+}
 
 export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
   const theme = useTheme();
@@ -21,12 +27,13 @@ export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
 
   return (
     <View style={styles.list}>
-      {expenses.map((expense, index) => {
-        const splitWays = expense.split?.memberIds?.length ?? 0;
+      {expenses.map((expense) => {
+        const net = expense.caller?.effectAmount ?? 0;
+        const { label, tone } = relation(net);
         return (
           <Pressable
-            key={`${expense.occurredOn}-${index}`}
-            onPress={() => onOpenExpense?.(index)}
+            key={expense.id}
+            onPress={() => onOpenExpense?.(expense.id)}
             accessibilityRole="button"
             style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
             <View style={styles.icon}>
@@ -35,17 +42,15 @@ export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
 
             <View style={styles.info}>
               <Text style={styles.title}>{expense.note || 'Expense'}</Text>
-              {splitWays > 0 ? (
-                <Text style={styles.subtitle}>
-                  Split {splitWays} {splitWays === 1 ? 'way' : 'ways'}
-                </Text>
-              ) : null}
+              <Text style={styles.subtitle}>
+                {expense.payer?.displayName ?? 'Someone'} paid ₹{groupIndian(expense.amount)}
+              </Text>
             </View>
 
             <View style={styles.amountWrap}>
-              <Text style={styles.relationLabel}>total</Text>
-              <Text style={[styles.amount, styles.amountSettled]}>
-                {formatRupees(expense.amount)}
+              <Text style={styles.relationLabel}>{label}</Text>
+              <Text style={[styles.amount, styles[tone]]}>
+                {formatRupees(Math.abs(net))}
               </Text>
             </View>
           </Pressable>
