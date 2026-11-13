@@ -3,6 +3,7 @@ import {Pressable, ScrollView, Text, TextInput, View} from 'react-native';
 import {useLocalSearchParams} from 'expo-router';
 
 import {Button} from '@/components/button';
+import {DateField, todayIsoDate} from '@/components/date-field';
 import {Dropdown} from '@/components/dropdown';
 import {TextButton} from '@/components/text-button';
 import {useTheme} from '@/hooks/use-theme';
@@ -39,6 +40,7 @@ export function AddExpenseScreen() {
   const [selectedGroupId, setSelectedGroupId] = useState(groupId);
   const [amount, setAmount] = useState(1200);
   const [description, setDescription] = useState("");
+  const [occurredOn, setOccurredOn] = useState(todayIsoDate);
   const [paidBy, setPaidBy] = useState('');
   const [splitMode, setSplitMode] = useState<SplitMode>('equally');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -105,7 +107,7 @@ export function AddExpenseScreen() {
     return {
       amount,
       note: description,
-      occurredOn: new Date().toISOString(),
+      occurredOn,
       categoryId: 'others', // TODO: support category selection
       fundingLines: [{memberId: effectivePaidBy, amount }],
       split: { mode: splitMode, memberIds: Object.keys(shares) },
@@ -162,6 +164,10 @@ export function AddExpenseScreen() {
               onChangeText={setDescription}
               placeholder="What was it for?"
             />
+          </View>
+
+          <View style={styles.fieldBlock}>
+            <DateField label="Date" value={occurredOn} onChange={setOccurredOn} />
           </View>
 
           <View style={styles.fieldBlock}>
