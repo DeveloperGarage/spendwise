@@ -17,7 +17,7 @@ export function GroupsScreen() {
   const [groups, setGroups] = useState<Groups>([]);
 
   useEffect(() => {
-    getGroupsForUser("mock-user-1").then(setGroups).catch(console.error);
+    getGroupsForUser().then(setGroups).catch(console.error);
   }, []);
 
   const onCancel = useGoBack()
