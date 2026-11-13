@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Pressable, ScrollView, Text, TextInput, View} from 'react-native';
 import {useLocalSearchParams} from 'expo-router';
 
@@ -114,8 +114,15 @@ export function AddExpenseScreen() {
 
   const goBack = useGoBack();
   const onCancel =  goBack;
+  const saveAttempt = useRef<{ payload: string; key: string } | null>(null);
   const onSave = () => {
-    saveExpense(createExpenseObject(), selectedGroupId!).then(goBack).catch(console.error);
+    if (!selectedGroupId) return;
+    const expense = createExpenseObject();
+    const payload = JSON.stringify(expense);
+    if (!saveAttempt.current || saveAttempt.current.payload !== payload) {
+      saveAttempt.current = { payload, key: crypto.randomUUID() };
+    }
+    saveExpense(expense, selectedGroupId, saveAttempt.current.key).then(goBack).catch(console.error);
   };
 
   return (
