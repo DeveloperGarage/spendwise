@@ -56,15 +56,7 @@ export function registerExpenseRoutes(groups: Hono<AppEnv>, db: Database) {
     const user = await requireSession(c, db);
     if (user instanceof Response) return user;
     const idempotencyKey = readIdempotencyKey(c);
-    if (!idempotencyKey) {
-      return c.json(
-        errorBody("VALIDATION_FAILED", "The idempotency key is missing.", c.get("requestId"), {
-          field: "Idempotency-Key",
-        }),
-        422,
-      );
-    }
-
+    
     let body: unknown;
     try {
       body = await c.req.json();
