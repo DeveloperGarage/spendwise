@@ -63,13 +63,13 @@ export const handlers = [
     return HttpResponse.json(groupsFactory({ userId: params.userId }, 10));
   }),
 
-  http.get(`${API_URL}/groups/group/:groupId`, ({ params }) => {
+  http.get(`${API_URL}/groups/:groupId`, ({ params }) => {
     const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId;
     const group = (groupsFactory({ userId: 'mock-user-1', id: groupId, name: groupId.split('-').join(' ') }, 1)[0]);
     return HttpResponse.json(group);
   }),
 
-  http.get(`${API_URL}/groups/group/:groupId/expenses`, ({ params }) => {
+  http.get(`${API_URL}/groups/:groupId/expenses`, ({ params }) => {
     const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId;
     return HttpResponse.json(expensesFactory({ groupId }));
   }),
