@@ -8,10 +8,10 @@ export const getGroupsForUser = async () => {
 };
 
 export const getGroupById = (groupId: string) =>
-  request<Group>('/groups/group/' + groupId);
+  request<Group>(`/groups/${groupId}`);
 
 export const getExpensesForGroup = (groupId: string) =>
-  request<PostExpense[]>('/groups/group/' + groupId + '/expenses');
+  request<PostExpense[]>(`/groups/${groupId}/expenses`);
 
 export const createGroup = (group: POST_GROUP) =>
   request<Group>('/groups', {
