@@ -38,7 +38,7 @@ export function AddExpenseScreen() {
   const [groups, setGroups] = useState<Groups>([]);
 
   const [selectedGroupId, setSelectedGroupId] = useState(groupId);
-  const [amount, setAmount] = useState(1200);
+  const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState("");
   const [occurredOn, setOccurredOn] = useState(todayIsoDate);
   const [paidBy, setPaidBy] = useState('');
@@ -110,7 +110,7 @@ export function AddExpenseScreen() {
       occurredOn,
       categoryId: 'others', // TODO: support category selection
       fundingLines: [{memberId: effectivePaidBy, amount }],
-      split: { mode: splitMode, memberIds: Object.keys(shares) },
+      split: { mode: 'equal', memberIds: Object.keys(shares) },
     };
   };
 
