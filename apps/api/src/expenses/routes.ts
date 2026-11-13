@@ -56,7 +56,7 @@ export function registerExpenseRoutes(groups: Hono<AppEnv>, db: Database) {
     const user = await requireSession(c, db);
     if (user instanceof Response) return user;
     const idempotencyKey = readIdempotencyKey(c);
-    
+
     let body: unknown;
     try {
       body = await c.req.json();
