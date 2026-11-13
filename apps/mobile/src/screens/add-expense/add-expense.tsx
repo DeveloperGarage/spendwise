@@ -108,7 +108,7 @@ export function AddExpenseScreen() {
       amount,
       note: description,
       occurredOn,
-      categoryId: 'others', // TODO: support category selection
+      categoryId: 'c_8cad895abf23b8b2', // TODO: category selection should be dynamic
       fundingLines: [{memberId: effectivePaidBy, amount }],
       split: { mode: 'equal', memberIds: Object.keys(shares) },
     };
