@@ -38,7 +38,7 @@ export function AddExpenseScreen() {
 
   const [selectedGroupId, setSelectedGroupId] = useState(groupId);
   const [amount, setAmount] = useState(1200);
-  const [description, setDescription] = useState("Dinner at Britto's");
+  const [description, setDescription] = useState("");
   const [paidBy, setPaidBy] = useState('');
   const [splitMode, setSplitMode] = useState<SplitMode>('equally');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
