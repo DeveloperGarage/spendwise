@@ -6,6 +6,7 @@ import { SESSION_COOKIE, userFromSessionCookie } from "../auth.ts";
 import type { AppEnv, SessionUser } from "../app-env.ts";
 import type { Database } from "../db/client.ts";
 import { errorBody } from "../errors.ts";
+import { EXPENSE_IDEMPOTENCY_ENABLED } from "./flags.ts";
 import { parseCreateExpenseBody, parseReplaceExpenseBody } from "./parse-body.ts";
 import {
   createExpense,
@@ -55,8 +56,8 @@ export function registerExpenseRoutes(groups: Hono<AppEnv>, db: Database) {
   groups.post("/groups/:groupId/expenses", async (c) => {
     const user = await requireSession(c, db);
     if (user instanceof Response) return user;
-    const idempotencyKey = readIdempotencyKey(c);
-    if (!idempotencyKey) {
+    const idempotencyKey = EXPENSE_IDEMPOTENCY_ENABLED ? readIdempotencyKey(c) : null;
+    if (EXPENSE_IDEMPOTENCY_ENABLED && !idempotencyKey) {
       return c.json(
         errorBody("VALIDATION_FAILED", "The idempotency key is missing.", c.get("requestId"), {
           field: "Idempotency-Key",

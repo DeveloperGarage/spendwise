@@ -25,6 +25,7 @@ import { amountToJson } from "../money.ts";
 import { isGroupMember } from "../groups/service.ts";
 import { memberIdsForGroup } from "../groups/journal.ts";
 import type { ParsedCreateExpense, ParsedReplaceExpense } from "./parse-body.ts";
+import { EXPENSE_IDEMPOTENCY_ENABLED } from "./flags.ts";
 
 export type ExpenseListItemJson = {
   id: string;
@@ -162,7 +163,7 @@ export async function createExpense(
   db: Database,
   groupId: string,
   callerId: string,
-  idempotencyKey: string,
+  idempotencyKey: string | null,
   parsed: ParsedCreateExpense,
 ): Promise<CreateExpenseResult> {
   const [group] = await db.select().from(groups).where(eq(groups.id, groupId));
@@ -170,11 +171,13 @@ export async function createExpense(
     return { ok: false, kind: "not_found" };
   }
 
-  const replayId = await findIdempotentExpense(db, callerId, groupId, idempotencyKey);
-  if (replayId) {
-    const expense = await loadExpenseJson(db, replayId, callerId);
-    if (!expense) throw new Error("idempotent expense row missing");
-    return { ok: true, expense, replay: true };
+  if (EXPENSE_IDEMPOTENCY_ENABLED && idempotencyKey) {
+    const replayId = await findIdempotentExpense(db, callerId, groupId, idempotencyKey);
+    if (replayId) {
+      const expense = await loadExpenseJson(db, replayId, callerId);
+      if (!expense) throw new Error("idempotent expense row missing");
+      return { ok: true, expense, replay: true };
+    }
   }
 
   const memberIds = new Set(await memberIdsForGroup(db, groupId));
@@ -205,19 +208,21 @@ export async function createExpense(
   let racedToExisting = false;
 
   await db.transaction(async (tx) => {
-    const existing = await tx
-      .select({ expenseId: expenseIdempotency.expenseId })
-      .from(expenseIdempotency)
-      .where(
-        and(
-          eq(expenseIdempotency.userId, callerId),
-          eq(expenseIdempotency.groupId, groupId),
-          eq(expenseIdempotency.idempotencyKey, idempotencyKey),
-        ),
-      );
-    if (existing.length > 0) {
-      racedToExisting = true;
-      return;
+    if (EXPENSE_IDEMPOTENCY_ENABLED && idempotencyKey) {
+      const existing = await tx
+        .select({ expenseId: expenseIdempotency.expenseId })
+        .from(expenseIdempotency)
+        .where(
+          and(
+            eq(expenseIdempotency.userId, callerId),
+            eq(expenseIdempotency.groupId, groupId),
+            eq(expenseIdempotency.idempotencyKey, idempotencyKey),
+          ),
+        );
+      if (existing.length > 0) {
+        racedToExisting = true;
+        return;
+      }
     }
 
     await tx.insert(expenses).values({
@@ -276,16 +281,20 @@ export async function createExpense(
       },
     });
 
-    await tx.insert(expenseIdempotency).values({
-      userId: callerId,
-      groupId,
-      idempotencyKey,
-      expenseId,
-    });
+    if (EXPENSE_IDEMPOTENCY_ENABLED && idempotencyKey) {
+      await tx.insert(expenseIdempotency).values({
+        userId: callerId,
+        groupId,
+        idempotencyKey,
+        expenseId,
+      });
+    }
   });
 
   const finalId =
-    (await findIdempotentExpense(db, callerId, groupId, idempotencyKey)) ?? expenseId;
+    EXPENSE_IDEMPOTENCY_ENABLED && idempotencyKey
+      ? ((await findIdempotentExpense(db, callerId, groupId, idempotencyKey)) ?? expenseId)
+      : expenseId;
   const expense = await loadExpenseJson(db, finalId, callerId);
   if (!expense) throw new Error("expense missing after create");
   const replay = racedToExisting || finalId !== expenseId;

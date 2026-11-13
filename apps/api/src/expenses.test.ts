@@ -9,6 +9,7 @@ import { createApp } from "./app.ts";
 import { DATABASE_URL, postgresAvailable } from "./db/available.ts";
 import { createDb } from "./db/client.ts";
 import { migrateJournal } from "./db/migrate.ts";
+import { EXPENSE_IDEMPOTENCY_ENABLED } from "./expenses/flags.ts";
 import { allowedEmails, categories, expenseIdempotency, expenses, users } from "./db/schema.ts";
 
 const hasPostgres = await postgresAvailable();
@@ -92,20 +93,25 @@ describe("expenses", { skip: !hasPostgres }, () => {
       assert.equal(expense.caller.effect, "lent");
       assert.equal(expense.caller.effectAmount, 80000);
 
-      const replay = await app.request(`/groups/${group.id}/expenses`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          cookie,
-          "Idempotency-Key": "k1",
-        },
-        body: JSON.stringify(body),
-      });
-      assert.equal(replay.status, 201);
-      const again = (await replay.json()) as { id: string };
-      assert.equal(again.id, expense.id);
-      const idemRows = await db.select().from(expenseIdempotency).where(eq(expenseIdempotency.groupId, group.id));
-      assert.equal(idemRows.length, 1);
+      if (EXPENSE_IDEMPOTENCY_ENABLED) {
+        const replay = await app.request(`/groups/${group.id}/expenses`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            cookie,
+            "Idempotency-Key": "k1",
+          },
+          body: JSON.stringify(body),
+        });
+        assert.equal(replay.status, 201);
+        const again = (await replay.json()) as { id: string };
+        assert.equal(again.id, expense.id);
+        const idemRows = await db
+          .select()
+          .from(expenseIdempotency)
+          .where(eq(expenseIdempotency.groupId, group.id));
+        assert.equal(idemRows.length, 1);
+      }
 
       const list = await app.request(`/groups/${group.id}/expenses`, { headers: { cookie } });
       assert.equal(list.status, 200);
