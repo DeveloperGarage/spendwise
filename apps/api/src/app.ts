@@ -57,6 +57,20 @@ export function createApp(db: Database, authOptions: AuthOptions = {}) {
     await next();
   });
 
+  app.onError((err, c) => {
+    const requestId = c.get("requestId");
+    console.error(
+      JSON.stringify({
+        requestId,
+        method: c.req.method,
+        path: c.req.path,
+        message: err.message,
+        stack: err.stack,
+      }),
+    );
+    return c.json(errorBody("INTERNAL", "Something went wrong.", requestId), 500);
+  });
+
   app.get("/health", async (c) => {
     await db.execute(sql`select 1`);
     return c.json({ ok: true });
