@@ -11,7 +11,7 @@ import {splitEqually} from '@/lib/split';
 import {createStyles} from './add-expense.styles';
 import {PageHeader, SafeArea, ScreenContainer, TextField} from "@/custom-elements";
 import {saveExpense} from "@/lib/api/expense";
-import {PostExpense} from "@/domain/models/postExpense";
+import {Expense} from "@/domain/models/expense";
 import {getGroupsForUser} from "@/lib/api/groups";
 import {Groups} from "@/domain/models/group";
 import {useGoBack} from "@/hooks/use-go-back";
@@ -101,7 +101,7 @@ export function AddExpenseScreen() {
     setSelected((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
   };
 
-  const createExpenseObject = (): PostExpense => {
+  const createExpenseObject = (): Expense => {
     return {
       amount,
       note: description,

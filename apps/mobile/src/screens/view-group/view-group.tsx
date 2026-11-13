@@ -11,7 +11,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { createStyles } from '@/screens/view-group/view-group.styles';
 import { formatRupees } from '@/lib/money';
 import { Group } from '@/domain/models/group';
-import { PostExpense } from '@/domain/models/postExpense';
+import { Expense } from '@/domain/models/expense';
 import { getExpensesForGroup, getGroupById } from '@/lib/api/groups';
 
 type Tab = 'expenses' | 'balances' | 'activity';
@@ -29,14 +29,14 @@ export function ViewGroupScreen() {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const { id } = useLocalSearchParams<{ id: string }>();
   const [group, setGroup] = useState<Group | null>(null);
-  const [expenses, setExpenses] = useState<PostExpense[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [tab, setTab] = useState<Tab>('expenses');
 
   const onAddExpense = () => router.push({ pathname: '/add-expense', params: { groupId: id } });
 
   useEffect(() => {
     getGroupById(id).then(setGroup).catch(console.error);
-    getExpensesForGroup(id).then(setExpenses).catch(console.error);
+    getExpensesForGroup(id).then((data) => setExpenses(data.expenses)).catch(console.error);
   }, [id]);
 
   const name = group?.name ?? 'Group';

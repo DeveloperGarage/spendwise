@@ -16,15 +16,27 @@ export const groupsFactory = (overrides: any = {}, count?: number): any[] => {
   }));
 }
 
-const expensesTemplate = [
-  { id: 'e1', title: "Dinner at Britto's", payerName: 'You', amountPaid: 1200, net: 800 },
-  { id: 'e2', title: 'Scooter rental', payerName: 'Riya', amountPaid: 900, net: -300 },
-  { id: 'e3', title: 'Beach shack lunch', payerName: 'You', amountPaid: 1600, net: 1060 },
-  { id: 'e4', title: 'Cab from airport', payerName: 'Sam', amountPaid: 1400, net: -350 },
-];
+const expensesTemplate = {
+  "expenses": [
+    {
+      "id": "e_1",
+      "version": 1,
+      "note": "Dinner at Britto's",
+      "occurredOn": "2026-11-07",
+      "category": { "id": "c_food", "name": "Food" },
+      "amount": 120000,
+      "payer": { "id": "u_1", "displayName": "Aman" },
+      "caller": { "paid": 120000, "share": 40000, "effect": "lent", "effectAmount": 80000 },
+      "voided": false
+    }
+  ],
+  "nextCursor": null
+}
 
-export const expensesFactory = (overrides: any = {}): any[] =>
-  expensesTemplate.map((expense) => ({ groupId: 'mock-group-1', ...expense, ...overrides }));
+export const expensesFactory = (overrides: any = {}): any =>
+  ({expenses: expensesTemplate.expenses.map((expense) => ({groupId: 'mock-group-1', ...expense, ...overrides})),
+  nextCursor: expensesTemplate.nextCursor
+})
 
 const membersTemplate =
   { id: 'm1', displayName: 'You', email: 'you@example.com' }
