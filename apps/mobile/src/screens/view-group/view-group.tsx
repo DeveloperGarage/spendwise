@@ -5,6 +5,7 @@ import { Href, router, useLocalSearchParams } from 'expo-router';
 
 import { PageHeader, SafeArea, ScreenContainer } from '@/custom-elements';
 import { Button } from '@/components/button';
+import { TextButton } from '@/components/text-button';
 import { ExpenseList } from '@/components/expense-list';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
@@ -55,7 +56,10 @@ export function ViewGroupScreen() {
             <Text style={styles.backChevron}>‹</Text>
             <Text style={styles.headerTitle}>{name}</Text>
           </Pressable>
-
+          <TextButton
+            onPress={() => router.push({ pathname: '/add-members', params: { groupId: id } })}
+            text="Add"
+          />
         </PageHeader>
 
         <ScrollView

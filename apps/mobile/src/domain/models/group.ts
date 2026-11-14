@@ -1,7 +1,8 @@
-type GroupMember = {
+export type GroupMember = {
   id: string;
-  name: string;
-}
+  displayName: string;
+  email: string;
+};
 
 export type Group = {
   id: string;

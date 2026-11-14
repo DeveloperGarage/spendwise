@@ -18,3 +18,9 @@ export const createGroup = (group: POST_GROUP) =>
     method: 'POST',
     body: JSON.stringify(group),
   });
+
+export const addGroupMembers = (groupId: string, memberEmails: string[]) =>
+  request<Group>(`/groups/${groupId}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ memberEmails }),
+  });
