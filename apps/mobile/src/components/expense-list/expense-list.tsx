@@ -11,9 +11,9 @@ type ExpenseListProps = Readonly<{
   onOpenExpense?: (id: string) => void;
 }>;
 
-function relation(net: number) {
-  if (net > 0) return { label: 'you lent', tone: 'amountPositive' as const };
-  if (net < 0) return { label: 'you owe', tone: 'amountNegative' as const };
+function relation(effect: string | undefined) {
+  if (effect === 'owe') return { label: 'you owe', tone: 'amountNegative' as const };
+  if (effect === 'lent') return { label: 'you lent', tone: 'amountPositive' as const };
   return { label: 'settled', tone: 'amountSettled' as const };
 }
 
@@ -29,7 +29,7 @@ export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
     <View style={styles.list}>
       {expenses.map((expense) => {
         const net = expense.caller?.effectAmount ?? 0;
-        const { label, tone } = relation(net);
+        const { label, tone } = relation(expense.caller?.effect);
         return (
           <Pressable
             key={expense.id}

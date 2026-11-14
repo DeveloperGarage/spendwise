@@ -69,7 +69,14 @@ export function ViewGroupScreen() {
             style={styles.banner}>
             <View>
               <Text style={styles.bannerLabel}>{owed ? 'You are owed' : 'You owe'}</Text>
-              <Text style={styles.bannerValue}>{formatRupees(Math.abs(balance))}</Text>
+              <Text
+                style={[
+                  styles.bannerValue,
+                  balance > 0 && styles.bannerPositive,
+                  balance < 0 && styles.bannerNegative,
+                ]}>
+                {formatRupees(Math.abs(balance))}
+              </Text>
             </View>
             <Pressable
               onPress={() => {

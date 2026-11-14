@@ -52,6 +52,12 @@ export const createStyles = (theme: Theme) =>
       color: StaticColors.white,
       marginTop: Spacing.xs,
     },
+    bannerPositive: {
+      color: theme.positive,
+    },
+    bannerNegative: {
+      color: theme.negative,
+    },
     settleButton: {
       backgroundColor: StaticColors.white,
       borderRadius: Radius.full,
