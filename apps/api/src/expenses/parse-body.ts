@@ -1,15 +1,18 @@
-import type { SplitInput } from "@spendwise/domain";
-
 import { readAmount } from "../money.ts";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const SPLIT_MODES = new Set(["equal", "exact", "percentage", "shares"]);
+
+export type SplitLine = { memberId: string; amount: number };
 
 export type ParsedCreateExpense = {
   note: string;
   occurredOn: string;
   categoryId: string;
   amount: number;
-  split: SplitInput;
+  splitMode: string;
+  split: SplitLine[];
   fundingMemberId: string;
 };
 
@@ -70,90 +73,47 @@ export function parseCreateExpenseBody(body: unknown): ParsedCreateExpense | Par
     return { kind: "field", field: "fundingLines" };
   }
 
-  const splitParsed = parseSplit(record.split);
-  if ("field" in splitParsed) return { kind: "field", field: splitParsed.field };
+  const splitModeRaw = typeof record.splitMode === "string" ? record.splitMode.trim() : "";
+  if (!SPLIT_MODES.has(splitModeRaw)) {
+    return { kind: "field", field: "splitMode" };
+  }
+
+  const splitLines = parseSplitLines(record.split);
+  if ("field" in splitLines) return { kind: "field", field: splitLines.field };
+
+  const splitSum = splitLines.lines.reduce((sum, line) => sum + line.amount, 0);
+  if (splitSum !== amount.amount) {
+    return { kind: "split_refused", gap: amount.amount - splitSum };
+  }
 
   return {
     note,
     occurredOn,
     categoryId,
     amount: amount.amount,
-    split: splitParsed,
+    splitMode: splitModeRaw,
+    split: splitLines.lines,
     fundingMemberId,
   };
 }
 
-function parseSplit(split: unknown): SplitInput | { field: string } {
-  if (split === null || typeof split !== "object") {
+function parseSplitLines(split: unknown): { lines: SplitLine[] } | { field: string } {
+  if (!Array.isArray(split) || split.length === 0) {
     return { field: "split" };
   }
-  const mode = (split as { mode?: unknown }).mode;
-  if (mode === "equal") {
-    const memberIds = (split as { memberIds?: unknown }).memberIds;
-    if (!Array.isArray(memberIds) || memberIds.some((id) => typeof id !== "string")) {
-      return { field: "split" };
-    }
-    const trimmed = memberIds.map((id) => (id as string).trim()).filter(Boolean);
-    if (trimmed.length === 0) return { field: "split" };
-    return { mode: "equal", memberIds: trimmed };
+  const seen = new Set<string>();
+  const lines: SplitLine[] = [];
+  for (const row of split) {
+    if (row === null || typeof row !== "object") return { field: "split" };
+    const memberId =
+      typeof (row as { memberId?: unknown }).memberId === "string"
+        ? (row as { memberId: string }).memberId.trim()
+        : "";
+    const amt = readAmount((row as { amount?: unknown }).amount);
+    if (!memberId || !amt.ok || amt.amount < 0) return { field: "split" };
+    if (seen.has(memberId)) return { field: "split" };
+    seen.add(memberId);
+    lines.push({ memberId, amount: amt.amount });
   }
-  if (mode === "exact") {
-    const raw =
-      (split as { amounts?: unknown }).amounts ??
-      (split as { lines?: unknown }).lines ??
-      (split as { exact?: unknown }).exact;
-    if (!Array.isArray(raw)) return { field: "split" };
-    const amounts: { memberId: string; amount: number }[] = [];
-    for (const row of raw) {
-      if (row === null || typeof row !== "object") return { field: "split" };
-      const memberId =
-        typeof (row as { memberId?: unknown }).memberId === "string"
-          ? (row as { memberId: string }).memberId.trim()
-          : "";
-      const amt = readAmount((row as { amount?: unknown }).amount);
-      if (!memberId || !amt.ok) return { field: "split" };
-      amounts.push({ memberId, amount: amt.amount });
-    }
-    if (amounts.length === 0) return { field: "split" };
-    return { mode: "exact", amounts };
-  }
-  if (mode === "percentage") {
-    const rows = (split as { percentages?: unknown }).percentages;
-    if (!Array.isArray(rows)) return { field: "split" };
-    const percentages: { memberId: string; hundredths: number }[] = [];
-    for (const row of rows) {
-      if (row === null || typeof row !== "object") return { field: "split" };
-      const memberId =
-        typeof (row as { memberId?: unknown }).memberId === "string"
-          ? (row as { memberId: string }).memberId.trim()
-          : "";
-      const hundredths = (row as { hundredths?: unknown }).hundredths;
-      if (!memberId || typeof hundredths !== "number" || !Number.isInteger(hundredths)) {
-        return { field: "split" };
-      }
-      percentages.push({ memberId, hundredths });
-    }
-    if (percentages.length === 0) return { field: "split" };
-    return { mode: "percentage", percentages };
-  }
-  if (mode === "shares") {
-    const rows = (split as { shares?: unknown }).shares;
-    if (!Array.isArray(rows)) return { field: "split" };
-    const shares: { memberId: string; weight: number }[] = [];
-    for (const row of rows) {
-      if (row === null || typeof row !== "object") return { field: "split" };
-      const memberId =
-        typeof (row as { memberId?: unknown }).memberId === "string"
-          ? (row as { memberId: string }).memberId.trim()
-          : "";
-      const weight = (row as { weight?: unknown }).weight;
-      if (!memberId || typeof weight !== "number" || !Number.isInteger(weight) || weight <= 0) {
-        return { field: "split" };
-      }
-      shares.push({ memberId, weight });
-    }
-    if (shares.length === 0) return { field: "split" };
-    return { mode: "shares", shares };
-  }
-  return { field: "split" };
+  return { lines };
 }

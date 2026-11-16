@@ -65,12 +65,20 @@ describe("expenses", { skip: !hasPostgres }, () => {
         .where(eq(categories.groupId, group.id));
       assert.ok(foodCat);
 
+      const perPerson = Math.floor(120000 / memberIds.length);
+      const remainder = 120000 - perPerson * memberIds.length;
+      const split = memberIds.map((id, index) => ({
+        memberId: id,
+        amount: perPerson + (index < remainder ? 1 : 0),
+      }));
+
       const body = {
         note: "Dinner",
         occurredOn: "2026-11-07",
         categoryId: foodCat.id,
         amount: 120000,
-        split: { mode: "equal" as const, memberIds },
+        splitMode: "equal",
+        split,
         fundingLines: [{ memberId: me.id, amount: 120000 }],
       };
 
@@ -166,10 +174,11 @@ describe("expenses", { skip: !hasPostgres }, () => {
         body: JSON.stringify({
           note: "",
           occurredOn: "2026-11-07",
-          categoryId: cat.id,
+          categoryId: cat!.id,
           amount: 10000,
-          split: { mode: "exact", amounts: [{ memberId: me.id, amount: 5000 }] },
-          fundingLines: [{ memberId: me.id, amount: 10000 }],
+          splitMode: "exact",
+          split: [{ memberId: me!.id, amount: 5000 }],
+          fundingLines: [{ memberId: me!.id, amount: 10000 }],
         }),
       });
       assert.equal(bad.status, 422);
@@ -260,10 +269,11 @@ describe("expenses", { skip: !hasPostgres }, () => {
       const postBody = {
         note: "Original",
         occurredOn: "2026-11-07",
-        categoryId: cat.id,
+        categoryId: cat!.id,
         amount: 30000,
-        split: { mode: "equal" as const, memberIds: [me.id] },
-        fundingLines: [{ memberId: me.id, amount: 30000 }],
+        splitMode: "equal",
+        split: [{ memberId: me!.id, amount: 30000 }],
+        fundingLines: [{ memberId: me!.id, amount: 30000 }],
       };
       const post = await app.request(`/groups/${group.id}/expenses`, {
         method: "POST",
@@ -283,12 +293,14 @@ describe("expenses", { skip: !hasPostgres }, () => {
       assert.equal(get.status, 200);
       const detail = (await get.json()) as {
         version: number;
-        allocationLines: { memberId: string; amount: number }[];
+        split: { memberId: string; amount: number }[];
+        splitMode: string;
         note: string;
       };
       assert.equal(detail.version, 1);
-      assert.equal(detail.allocationLines.length, 1);
-      assert.equal(detail.allocationLines[0]?.amount, 30000);
+      assert.equal(detail.splitMode, "equal");
+      assert.equal(detail.split.length, 1);
+      assert.equal(detail.split[0]?.amount, 30000);
 
       const put = await app.request(`/groups/${group.id}/expenses/${createdExpense.id}`, {
         method: "PUT",

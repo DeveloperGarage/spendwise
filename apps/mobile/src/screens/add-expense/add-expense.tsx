@@ -28,6 +28,12 @@ const SPLIT_MODES: { key: SplitMode; label: string }[] = [
   { key: 'percent', label: '%' },
 ];
 
+function splitModeForApi(mode: SplitMode): string {
+  if (mode === 'equally') return 'equal';
+  if (mode === 'percent') return 'percentage';
+  return 'exact';
+}
+
 export function AddExpenseScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -104,13 +110,18 @@ export function AddExpenseScreen() {
   };
 
   const createExpenseObject = (): PostExpense => {
+    const split = Object.entries(shares).map(([memberId, splitAmount]) => ({
+      memberId,
+      amount: splitAmount,
+    }));
     return {
       amount,
       note: description,
       occurredOn,
       categoryId: 'c_8cad895abf23b8b2', // TODO: category selection should be dynamic
-      fundingLines: [{memberId: effectivePaidBy, amount }],
-      split: { mode: 'equal', memberIds: Object.keys(shares) },
+      fundingLines: [{ memberId: effectivePaidBy, amount }],
+      splitMode: splitModeForApi(splitMode),
+      split,
     };
   };
 

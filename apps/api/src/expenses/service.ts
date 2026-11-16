@@ -1,12 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import {
-  assertZeroSum,
-  computeBalances,
-  describeExpenseForMember,
-  split,
-  type SplitInput,
-} from "@spendwise/domain";
+import { assertZeroSum, computeBalances, describeExpenseForMember } from "@spendwise/domain";
 import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
 
 import type { Database } from "../db/client.ts";
@@ -45,19 +39,6 @@ const MAX_LIMIT = 100;
 class ReplaceBlockedError extends Error {
   constructor(readonly reason: "voided" | "version_conflict") {
     super(reason);
-  }
-}
-
-function memberIdsFromSplit(input: SplitInput): string[] {
-  switch (input.mode) {
-    case "equal":
-      return input.memberIds;
-    case "exact":
-      return input.amounts.map((row) => row.memberId);
-    case "percentage":
-      return input.percentages.map((row) => row.memberId);
-    case "shares":
-      return input.shares.map((row) => row.memberId);
   }
 }
 
@@ -181,7 +162,7 @@ export async function createExpense(
   }
 
   const memberIds = new Set(await memberIdsForGroup(db, groupId));
-  const splitMembers = memberIdsFromSplit(parsed.split);
+  const splitMembers = parsed.split.map((line) => line.memberId);
   const allReferenced = new Set([parsed.fundingMemberId, ...splitMembers]);
   for (const id of allReferenced) {
     if (!memberIds.has(id)) {
@@ -197,13 +178,8 @@ export async function createExpense(
     return { ok: false, kind: "field", field: "categoryId" };
   }
 
-  const splitResult = split(parsed.amount, parsed.split);
-  if (!splitResult.ok) {
-    return { ok: false, kind: "split_refused", gap: splitResult.gap };
-  }
-
   const expenseId = `e_${randomBytes(8).toString("hex")}`;
-  const splitMode = parsed.split.mode;
+  const splitMode = parsed.splitMode;
   const memberIdList = [...memberIds];
   let racedToExisting = false;
 
@@ -245,7 +221,7 @@ export async function createExpense(
       amountPaise: parsed.amount,
     });
 
-    for (const line of splitResult.lines) {
+    for (const line of parsed.split) {
       await tx.insert(expenseAllocationLines).values({
         id: `a_${randomBytes(8).toString("hex")}`,
         expenseId,
@@ -416,45 +392,10 @@ export type ExpenseDetailJson = {
   occurredOn: string;
   categoryId: string;
   amount: number;
-  split: SplitInput;
+  splitMode: string;
+  split: { memberId: string; amount: number }[];
   fundingLines: { memberId: string; amount: number }[];
-  allocationLines: { memberId: string; amount: number }[];
 };
-
-function splitWireFromStored(
-  splitMode: string,
-  allocationRows: { memberId: string; amountPaise: number }[],
-  grossPaise: number,
-): SplitInput {
-  if (splitMode === "equal") {
-    return { mode: "equal", memberIds: allocationRows.map((row) => row.memberId) };
-  }
-  if (splitMode === "exact") {
-    return {
-      mode: "exact",
-      amounts: allocationRows.map((row) => ({
-        memberId: row.memberId,
-        amount: row.amountPaise,
-      })),
-    };
-  }
-  if (splitMode === "percentage") {
-    return {
-      mode: "percentage",
-      percentages: allocationRows.map((row) => ({
-        memberId: row.memberId,
-        hundredths: Math.round((row.amountPaise / grossPaise) * 10000),
-      })),
-    };
-  }
-  return {
-    mode: "shares",
-    shares: allocationRows.map((row) => ({
-      memberId: row.memberId,
-      weight: row.amountPaise,
-    })),
-  };
-}
 
 async function loadExpenseDetailJson(
   db: Database,
@@ -478,12 +419,12 @@ async function loadExpenseDetailJson(
     occurredOn: String(row.occurredOn),
     categoryId: row.categoryId,
     amount: amountToJson(row.grossPaise),
-    split: splitWireFromStored(row.splitMode, allocationRows, row.grossPaise),
-    fundingLines: fundingRows.map((line) => ({
+    splitMode: row.splitMode,
+    split: allocationRows.map((line) => ({
       memberId: line.memberId,
       amount: amountToJson(line.amountPaise),
     })),
-    allocationLines: allocationRows.map((line) => ({
+    fundingLines: fundingRows.map((line) => ({
       memberId: line.memberId,
       amount: amountToJson(line.amountPaise),
     })),
@@ -502,9 +443,8 @@ async function assertGroupBalancesZero(db: Database, groupId: string, memberIdLi
 }
 
 type WriteValidation =
-  | { ok: true; splitResult: Extract<ReturnType<typeof split>, { ok: true }>; splitMode: string }
-  | { ok: false; kind: "field"; field: string }
-  | { ok: false; kind: "split_refused"; gap: number };
+  | { ok: true }
+  | { ok: false; kind: "field"; field: string };
 
 async function validateExpenseWrite(
   db: Database,
@@ -512,7 +452,7 @@ async function validateExpenseWrite(
   parsed: ParsedCreateExpense,
 ): Promise<WriteValidation> {
   const memberIds = new Set(await memberIdsForGroup(db, groupId));
-  const splitMembers = memberIdsFromSplit(parsed.split);
+  const splitMembers = parsed.split.map((line) => line.memberId);
   const allReferenced = new Set([parsed.fundingMemberId, ...splitMembers]);
   for (const id of allReferenced) {
     if (!memberIds.has(id)) {
@@ -528,12 +468,7 @@ async function validateExpenseWrite(
     return { ok: false, kind: "field", field: "categoryId" };
   }
 
-  const splitResult = split(parsed.amount, parsed.split);
-  if (!splitResult.ok) {
-    return { ok: false, kind: "split_refused", gap: splitResult.gap };
-  }
-
-  return { ok: true, splitResult, splitMode: parsed.split.mode };
+  return { ok: true };
 }
 
 export type GetExpenseResult =
@@ -587,11 +522,10 @@ export async function replaceExpense(
 
   const validation = await validateExpenseWrite(db, groupId, parsed);
   if (!validation.ok) {
-    if (validation.kind === "field") return { ok: false, kind: "field", field: validation.field };
-    return { ok: false, kind: "split_refused", gap: validation.gap };
+    return { ok: false, kind: "field", field: validation.field };
   }
 
-  const { splitResult, splitMode } = validation;
+  const splitMode = parsed.splitMode;
   const memberIdList = await memberIdsForGroup(db, groupId);
   const nextVersion = row.version + 1;
 
@@ -630,7 +564,7 @@ export async function replaceExpense(
       amountPaise: parsed.amount,
     });
 
-    for (const line of splitResult.lines) {
+    for (const line of parsed.split) {
       await tx.insert(expenseAllocationLines).values({
         id: `a_${randomBytes(8).toString("hex")}`,
         expenseId,

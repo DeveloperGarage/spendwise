@@ -85,6 +85,14 @@ export function registerExpenseRoutes(groups: Hono<AppEnv>, db: Database) {
         422,
       );
     }
+    if ("kind" in parsed && parsed.kind === "split_refused") {
+      return c.json(
+        errorBody("SPLIT_REFUSED", "The shares do not add up.", c.get("requestId"), {
+          gap: parsed.gap,
+        }),
+        422,
+      );
+    }
     if ("kind" in parsed) {
       return c.json(
         errorBody("VALIDATION_FAILED", "The body is wrong.", c.get("requestId"), { field: "body" }),
@@ -153,6 +161,14 @@ export function registerExpenseRoutes(groups: Hono<AppEnv>, db: Database) {
       return c.json(
         errorBody("VALIDATION_FAILED", "The body is wrong.", c.get("requestId"), {
           field: parsed.field,
+        }),
+        422,
+      );
+    }
+    if ("kind" in parsed && parsed.kind === "split_refused") {
+      return c.json(
+        errorBody("SPLIT_REFUSED", "The shares do not add up.", c.get("requestId"), {
+          gap: parsed.gap,
         }),
         422,
       );

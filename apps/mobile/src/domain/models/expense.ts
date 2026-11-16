@@ -5,11 +5,17 @@ type FundingLine = {
   amount: number;
 };
 
+export type SplitLine = {
+  memberId: Member["id"];
+  amount: number;
+};
+
 export type PostExpense = {
   note: string,
   occurredOn: string,
   amount: number,
-  split: { "mode": string, "memberIds": Member["id"][] },
+  splitMode: string,
+  split: SplitLine[],
   categoryId: string,
   fundingLines: FundingLine[]
 };

@@ -270,20 +270,15 @@ The Expenses tab, newest first.
   "occurredOn": "2026-11-07",
   "categoryId": "c_food",
   "amount": 120000,
-  "splitType": "equal",
+  "splitMode": "equal",
   "split": [{ "memberId": "u_1", "amount": 60000 }, {"memberId": "u_2", "amount": 60000 }],
   "fundingLines": [{ "memberId": "u_1", "amount": 120000 }]
 }
 ```
 
-Phase 1 accepts one funding line, and that line's `amount` equals the expense `amount`. `split.mode` is `equal`, `exact`, `percentage`, or `shares`.
+Phase 1 accepts one funding line, and that line's `amount` equals the expense `amount`. `splitMode` is `equal`, `exact`, `percentage`, or `shares`. It is stored on the expense as `split_mode` and echoed on reads.
 
-| Mode | Body | Rule |
-| --- | --- | --- |
-| `equal` | `memberIds` | Weights are 1. |
-| `exact` | `{ "memberId", "amount" }[]` | The amounts must sum to the expense `amount`. |
-| `percentage` | `{ "memberId", "hundredths" }[]` | Accepted only when the hundredths sum to `10000` (100.00%). |
-| `shares` | `{ "memberId", "weight" }[]` | Each weight is a positive integer. |
+Every mode uses the same `split` array: `{ "memberId", "amount" }[]`. Each `amount` is an integer in paise. The client calculates the shares. The server stores them and checks that they sum to the expense `amount`. A mismatch is `422 SPLIT_REFUSED` with `details.gap` set to the difference in paise.
 
 The Add expense frame shows Equally, Exact, and %. `shares` stays on the API so the screen can hide it without a second split. `categoryId` and `occurredOn` stay required. The current frame does not draw those controls yet.
 
@@ -291,7 +286,7 @@ The Add expense frame shows Equally, Exact, and %. `shares` stays on the API so 
 
 ### GET /groups/:groupId/expenses/:expenseId
 
-The edit form. The create body, plus `id`, `version`, `voided`, and the allocation lines the split produced.
+The edit form. The create body, plus `id`, `version`, and `voided`. `split` is the stored per-member amounts.
 
 ### PUT /groups/:groupId/expenses/:expenseId
 
