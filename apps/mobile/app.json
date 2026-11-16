@@ -4,27 +4,22 @@
     "slug": "spendwise",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/brand-logo.png",
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#6C5CE7",
+        "foregroundImage": "./assets/images/brand-logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "single",
-      "favicon": "./assets/images/favicon.png",
+      "favicon": "./assets/images/brand-logo.png",
       "name": "Spendwise",
       "shortName": "Spendwise",
-      "themeColor": "#208AEF",
+      "themeColor": "#6C5CE7",
       "backgroundColor": "#FFFFFF",
       "display": "standalone"
     },
@@ -33,8 +28,8 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
+          "backgroundColor": "#6C5CE7",
+          "image": "./assets/images/brand-logo.png",
           "imageWidth": 76
         }
       ]
