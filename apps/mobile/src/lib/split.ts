@@ -24,3 +24,34 @@ export function splitEqually(total: number, participantCount: number): number[] 
     index < extraCount ? base + step : base,
   );
 }
+
+/**
+ * Splits `total` proportionally to `weights` (e.g. percentages or custom
+ * shares). The returned integer amounts always sum back to `total`; any
+ * rounding remainder is handed to the largest fractional parts first.
+ *
+ * When every weight is zero (nothing entered yet) it falls back to an equal
+ * split so the expense still balances.
+ */
+export function splitByWeights(total: number, weights: number[]): number[] {
+  const count = weights.length;
+  if (count === 0) return [];
+
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  if (totalWeight <= 0) return splitEqually(total, count);
+
+  const amount = Math.trunc(total);
+  const raw = weights.map((weight) => (amount * weight) / totalWeight);
+  const shares = raw.map((value) => Math.floor(value));
+  let remainder = amount - shares.reduce((sum, share) => sum + share, 0);
+
+  const byLargestFraction = raw
+    .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+    .sort((a, b) => b.fraction - a.fraction);
+
+  for (let i = 0; i < remainder; i += 1) {
+    shares[byLargestFraction[i % count].index] += 1;
+  }
+
+  return shares;
+}

@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {Pressable, ScrollView, Text, TextInput, View} from 'react-native';
 import {useLocalSearchParams} from 'expo-router';
 
@@ -7,26 +7,18 @@ import {DateField, todayIsoDate} from '@/components/date-field';
 import {Dropdown} from '@/components/dropdown';
 import {TextButton} from '@/components/text-button';
 import {useTheme} from '@/hooks/use-theme';
-import {formatRupees, groupIndian} from '@/lib/money';
-import {splitEqually} from '@/lib/split';
+import {groupIndian} from '@/lib/money';
 import {createStyles} from './add-expense.styles';
 import {PageHeader, SafeArea, ScreenContainer, TextField} from "@/custom-elements";
 import {saveExpense} from "@/lib/api/expense";
-import {PostExpense} from "@/domain/models/expense";
+import {PostExpense, SplitValue} from "@/domain/models/expense";
 import {getGroupsForUser} from "@/lib/api/groups";
 import {Groups} from "@/domain/models/group";
 import {useGoBack} from "@/hooks/use-go-back";
 import {getMembersForGroup} from "@/lib/api/members";
 import {Member} from "@/domain/models/members";
 import {useMe} from "@/lib/session";
-
-type SplitMode = 'equally' | 'exact' | 'percent';
-
-const SPLIT_MODES: { key: SplitMode; label: string }[] = [
-  { key: 'equally', label: 'Equally' },
-  { key: 'exact', label: 'Exact' },
-  { key: 'percent', label: '%' },
-];
+import {ExpenseSplitEditor} from "@/components/expense-split-editor/expense-split-editor";
 
 function splitModeForApi(mode: SplitMode): string {
   if (mode === 'equally') return 'equal';
@@ -37,9 +29,9 @@ function splitModeForApi(mode: SplitMode): string {
 export function AddExpenseScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const { data: me } = useMe();
+  const {data: me} = useMe();
 
-  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
+  const {groupId} = useLocalSearchParams<{ groupId?: string }>();
   const [groupMembers, setGroupMembers] = useState<Member[]>([]);
   const [groups, setGroups] = useState<Groups>([]);
 
@@ -48,53 +40,36 @@ export function AddExpenseScreen() {
   const [description, setDescription] = useState("");
   const [occurredOn, setOccurredOn] = useState(todayIsoDate);
   const [paidBy, setPaidBy] = useState('');
-  const [splitMode, setSplitMode] = useState<SplitMode>('equally');
-  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [split, setSplit] = useState<SplitValue>({splitMode: 'equal', split: []});
 
-  useEffect(() => {
-    getGroupsForUser().then(setGroups).catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    if (!selectedGroupId) return;
-    getMembersForGroup(selectedGroupId).then(setGroupMembers).catch(console.error);
-  }, [selectedGroupId]);
-
-  const members = useMemo<Member[]>(() => {
+  // The roster the expense can be split across; the signed-in user shows as "You".
+  const roster = useMemo<Member[]>(() => {
     const base = selectedGroupId ? groupMembers : me ? [me] : [];
     return base.map((member) =>
-      me && member.id === me.id ? { ...member, displayName: 'You' } : member,
+      member.id === me?.id ? {...member, displayName: 'You'} : member,
     );
   }, [selectedGroupId, groupMembers, me]);
-
-  const isMemberSelected = useCallback(
-    (id: string) => selected[id] ?? true,
-    [selected],
-  );
 
   const effectivePaidBy = paidBy || me?.id || '';
 
   const groupOptions = useMemo(
-    () => groups.map((group) => ({ id: group.id, label: group.name })),
+    () => groups.map((group) => ({id: group.id, label: group.name})),
     [groups],
   );
 
   const payeeOptions = useMemo(
-    () => members.map((member) => ({id: member.id, label: member.displayName})),
-    [members],
+    () => roster.map((member) => ({id: member.id, label: member.displayName})),
+    [roster],
   );
 
-  // Equal split across the selected members; everyone else owes nothing.
-  // TODO: support the Exact and % modes with per-member inputs.
-  const shares = useMemo(() => {
-    const selectedIds = members.filter((m) => isMemberSelected(m.id)).map((m) => m.id);
-    const amounts = splitEqually(amount, selectedIds.length);
-    const byId: Record<string, number> = {};
-    selectedIds.forEach((id, index) => {
-      byId[id] = amounts[index];
-    });
-    return byId;
-  }, [amount, members, isMemberSelected]);
+  // The expense balances only when the participant shares add up to the total.
+  const splitTotal = useMemo(
+    () => split.split.reduce((sum, line) => sum + line.amount, 0),
+    [split],
+  );
+
+  const canSave =
+    !!selectedGroupId && amount > 0 && split.split.length > 0 && splitTotal === amount;
 
   const onAmountChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '');
@@ -126,14 +101,14 @@ export function AddExpenseScreen() {
   };
 
   const goBack = useGoBack();
-  const onCancel =  goBack;
+  const onCancel = goBack;
   const saveAttempt = useRef<{ payload: string; key: string } | null>(null);
   const onSave = () => {
-    if (!selectedGroupId) return;
+    if (!canSave || !selectedGroupId) return;
     const expense = createExpenseObject();
     const payload = JSON.stringify(expense);
     if (!saveAttempt.current || saveAttempt.current.payload !== payload) {
-      saveAttempt.current = { payload, key: crypto.randomUUID() };
+      saveAttempt.current = {payload, key: crypto.randomUUID()};
     }
     saveExpense(expense, selectedGroupId, saveAttempt.current.key).then(goBack).catch(console.error);
   };

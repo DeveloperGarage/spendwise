@@ -20,6 +20,15 @@ export type PostExpense = {
   fundingLines: FundingLine[]
 };
 
+export type SplitMode = PostExpense['splitMode'];
+export type SplitLine = PostExpense['split'][number];
+
+/** The resolved output of the split editor: the chosen mode + per-participant amounts. */
+export type SplitValue = {
+  splitMode: SplitMode;
+  split: SplitLine[];
+};
+
 export type Expense = {
   id: string,
   note: string,
