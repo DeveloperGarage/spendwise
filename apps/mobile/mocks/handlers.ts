@@ -111,5 +111,25 @@ export const handlers = [
 
   http.post(`${API_URL}/groups/:groupId/expenses`, ({ params }) => {
     return new HttpResponse(null, { status: 200 });
-  })
+  }),
+
+  http.post(`${API_URL}/groups/:groupId/settlements`, async ({ request }) => {
+    const body = (await request.json()) as {
+      fromMemberId: string;
+      toMemberId: string;
+      amount: number;
+      occurredOn: string;
+      note?: string;
+    };
+    return HttpResponse.json(
+      {
+        id: 's_mock',
+        version: 1,
+        voided: false,
+        ...body,
+        note: body.note ?? '',
+      },
+      { status: 201 },
+    );
+  }),
 ];

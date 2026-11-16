@@ -1,0 +1,1 @@
+export { SettleUpScreen as default } from '@/screens/settle-up/settle-up';

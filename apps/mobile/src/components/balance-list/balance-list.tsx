@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useMemo } from 'react';
 
 import { GroupBalances } from '@/domain/models/balances';
@@ -11,6 +11,7 @@ type BalanceListProps = Readonly<{
   currentUserId?: string;
   loading?: boolean;
   error?: string | null;
+  onSuggestionPress?: (suggestion: GroupBalances['suggestion'][number]) => void;
 }>;
 
 function statusLabel(balance: number) {
@@ -30,6 +31,7 @@ export function BalanceList({
   currentUserId,
   loading,
   error,
+  onSuggestionPress,
 }: BalanceListProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -83,10 +85,22 @@ export function BalanceList({
             {balances.suggestion.map((row, index) => {
               const from = nameById.get(row.fromMemberId) ?? 'Someone';
               const to = nameById.get(row.toMemberId) ?? 'Someone';
-              return (
-                <Text key={`${row.fromMemberId}-${row.toMemberId}-${index}`} style={styles.suggestionRow}>
+              const content = (
+                <Text style={styles.suggestionRow}>
                   {from} pays {to} {formatPaise(row.amount)}
                 </Text>
+              );
+              if (!onSuggestionPress) {
+                return <View key={`${row.fromMemberId}-${row.toMemberId}-${index}`}>{content}</View>;
+              }
+              return (
+                <Pressable
+                  key={`${row.fromMemberId}-${row.toMemberId}-${index}`}
+                  onPress={() => onSuggestionPress(row)}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [pressed && styles.pressed]}>
+                  {content}
+                </Pressable>
               );
             })}
           </View>

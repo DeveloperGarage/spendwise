@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { useEffect, useMemo, useState } from 'react';
-import { Href, router, useLocalSearchParams } from 'expo-router';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 import { PageHeader, SafeArea, ScreenContainer } from '@/custom-elements';
 import { Button } from '@/components/button';
@@ -43,12 +43,36 @@ export function ViewGroupScreen() {
 
   const onAddExpense = () => router.push({ pathname: '/add-expense', params: { groupId: id } });
 
-  useEffect(() => {
+  const openSettleUp = (suggestion?: GroupBalances['suggestion'][number]) => {
+    if (!id) return;
+    router.push({
+      pathname: '/settle-up',
+      params: {
+        groupId: id,
+        ...(suggestion
+          ? {
+              fromMemberId: suggestion.fromMemberId,
+              toMemberId: suggestion.toMemberId,
+              amountPaise: String(suggestion.amount),
+            }
+          : {}),
+      },
+    });
+  };
+
+  const refreshGroup = useCallback(() => {
+    if (!id) return;
     getGroupById(id).then(setGroup).catch(console.error);
     getExpensesForGroup(id).then((data) => setExpenses(data.expenses)).catch(console.error);
   }, [id]);
 
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
+      refreshGroup();
+    }, [refreshGroup]),
+  );
+
+  const refreshBalances = useCallback(() => {
     if (tab !== 'balances' || !id) return;
     setBalancesLoading(true);
     setBalancesError(null);
@@ -64,6 +88,16 @@ export function ViewGroupScreen() {
       })
       .finally(() => setBalancesLoading(false));
   }, [tab, id]);
+
+  useEffect(() => {
+    refreshBalances();
+  }, [refreshBalances]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshBalances();
+    }, [refreshBalances]),
+  );
 
   const name = group?.name ?? 'Group';
   const balance = group?.balance ?? 0;
@@ -108,12 +142,7 @@ export function ViewGroupScreen() {
               </Text>
             </View>
             <Pressable
-              onPress={() => {
-                Alert.alert(
-                  'Settle up',
-                  'Recording payments will be available once settlements are wired.',
-                );
-              }}
+              onPress={() => openSettleUp(balances?.suggestion[0])}
               accessibilityRole="button"
               style={({ pressed }) => [styles.settleButton, pressed && styles.pressed]}>
               <Text style={styles.settleButtonText}>Settle up</Text>
@@ -143,6 +172,7 @@ export function ViewGroupScreen() {
               currentUserId={me?.id}
               loading={balancesLoading}
               error={balancesError}
+              onSuggestionPress={(row) => openSettleUp(row)}
             />
           )}
           {tab === 'activity' && (
