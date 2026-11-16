@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useRef, useState} from "react";
 import {Pressable, Text, TextInput, View} from "react-native";
 
 import {useTheme} from "@/hooks/use-theme";
-import {formatRupees} from "@/lib/money";
+import {formatPaise} from "@/lib/money";
 import {splitByWeights, splitEqually} from "@/lib/split";
 import {Member} from "@/domain/models/members";
 import {SplitMode, SplitValue} from "@/domain/models/expense";
@@ -89,14 +89,15 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
     setter: React.Dispatch<React.SetStateAction<Record<string, number>>>,
     memberId: string,
     text: string,
+    scale = 1,
   ) => {
     const digits = text.replace(/[^0-9]/g, '');
-    setter((prev) => ({...prev, [memberId]: digits ? Number(digits) : 0}));
+    setter((prev) => ({...prev, [memberId]: digits ? Number(digits) * scale : 0}));
   };
 
   const renderShareControl = (member: Member) => {
     if (!isSelected(member.id)) {
-      return <Text style={[styles.memberAmount, styles.memberAmountZero]}>{formatRupees(0)}</Text>;
+      return <Text style={[styles.memberAmount, styles.memberAmountZero]}>{formatPaise(0)}</Text>;
     }
 
     if (mode === 'exact') {
@@ -105,8 +106,8 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
           <Text style={styles.editAffix}>₹</Text>
           <TextInput
             style={styles.editInput}
-            value={exactInput[member.id] ? String(exactInput[member.id]) : ''}
-            onChangeText={(text) => setMemberInput(setExactInput, member.id, text)}
+            value={exactInput[member.id] ? String(exactInput[member.id] / 100) : ''}
+            onChangeText={(text) => setMemberInput(setExactInput, member.id, text, 100)}
             keyboardType="number-pad"
             placeholder="0"
             placeholderTextColor={theme.textSecondary}
@@ -129,7 +130,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
             accessibilityLabel={`Percentage for ${member.displayName}`}
           />
           <Text style={styles.editAffix}>%</Text>
-          <Text style={styles.resolvedShare}>{formatRupees(shareById[member.id] ?? 0)}</Text>
+          <Text style={styles.resolvedShare}>{formatPaise(shareById[member.id] ?? 0)}</Text>
         </View>
       );
     }
@@ -137,7 +138,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
     const share = shareById[member.id] ?? 0;
     return (
       <Text style={[styles.memberAmount, share === 0 && styles.memberAmountZero]}>
-        {formatRupees(share)}
+        {formatPaise(share)}
       </Text>
     );
   };

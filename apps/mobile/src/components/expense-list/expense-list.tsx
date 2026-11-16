@@ -2,7 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useMemo } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
-import { formatRupees, groupIndian } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { Expense } from '@/domain/models/expense';
 import { createStyles } from './expense-list.styles';
 
@@ -43,14 +43,14 @@ export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
             <View style={styles.info}>
               <Text style={styles.title}>{expense.note || 'Expense'}</Text>
               <Text style={styles.subtitle}>
-                {expense.payer?.displayName ?? 'Someone'} paid ₹{groupIndian(expense.amount)}
+                {expense.payer?.displayName ?? 'Someone'} paid {formatPaise(expense.amount)}
               </Text>
             </View>
 
             <View style={styles.amountWrap}>
               <Text style={styles.relationLabel}>{label}</Text>
               <Text style={[styles.amount, styles[tone]]}>
-                {formatRupees(Math.abs(net))}
+                {formatPaise(Math.abs(net))}
               </Text>
             </View>
           </Pressable>

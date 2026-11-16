@@ -7,12 +7,10 @@ export function groupIndian(value: number): string {
   return `${rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',')},${last3}`;
 }
 
-/** Formats a rupee amount as "₹ 1,560". Sign is handled by the caller. */
-export function formatRupees(value: number): string {
-  return `₹ ${groupIndian(value)}`;
-}
-
-/** Formats integer paise from the API (e.g. 156000 → "₹ 1,560.00"). */
+/**
+ * Formats integer paise from the API (e.g. 156000 → "₹ 1,560.00").
+ * Money is paise everywhere except the text a person types; see docs/api.md.
+ */
 export function formatPaise(paise: number): string {
   const sign = paise < 0 ? '-' : '';
   const abs = Math.abs(paise);

@@ -1,5 +1,5 @@
 import {Pressable, Text, View} from "react-native";
-import {formatRupees} from "@/lib/money";
+import {formatPaise} from "@/lib/money";
 import {useTheme} from "@/hooks/use-theme";
 import {useMemo} from "react";
 import { createStyles } from "./gropus-list.styles";
@@ -43,7 +43,7 @@ export function GroupsList({groups, limit}: Readonly<{ groups: Groups, limit: nu
                 owed ? styles.groupAmountPositive : styles.groupAmountNegative,
               ]}>
               {owed ? '+ ' : '− '}
-              {formatRupees(group.balance)}
+              {formatPaise(group.balance)}
             </Text>
           </Pressable>
         );

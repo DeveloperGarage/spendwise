@@ -30,6 +30,8 @@ export function AddExpenseScreen() {
   const [groups, setGroups] = useState<Groups>([]);
 
   const [selectedGroupId, setSelectedGroupId] = useState(groupId);
+  // Money is integer paise on the wire (docs/api.md): ₹1,200.00 is 120000.
+  // The input accepts whole rupees; everything downstream is paise.
   const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState("");
   const [occurredOn, setOccurredOn] = useState(todayIsoDate);
@@ -67,7 +69,7 @@ export function AddExpenseScreen() {
 
   const onAmountChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '');
-    setAmount(digits ? Number(digits) : 0);
+    setAmount(digits ? Number(digits) * 100 : 0);
   };
 
   const onGroupSelect = (groupId: string) => {
@@ -128,7 +130,7 @@ export function AddExpenseScreen() {
             <Text style={styles.amountLabel}>AMOUNT</Text>
             <TextInput
               style={styles.amountInput}
-              value={`₹ ${groupIndian(amount)}`}
+              value={`₹ ${groupIndian(amount / 100)}`}
               onChangeText={onAmountChange}
               keyboardType="number-pad"
               selectTextOnFocus

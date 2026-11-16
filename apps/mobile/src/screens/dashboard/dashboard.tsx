@@ -6,7 +6,7 @@ import { Redirect, useRouter, type Href } from 'expo-router';
 import { Button } from '@/components/button';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
-import { formatRupees } from '@/lib/money';
+import { formatPaise } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
 import {ShowGroups} from "@/components/group-list";
@@ -86,16 +86,16 @@ export function DashboardScreen() {
             <Text style={styles.balanceLabel}>NET BALANCE</Text>
             <Text style={styles.balanceValue}>
               {net >= 0 ? '+ ' : '− '}
-              {formatRupees(net)}
+              {formatPaise(net)}
             </Text>
             <View style={styles.balanceBreakdown}>
               <View style={styles.balanceColumn}>
                 <Text style={styles.balanceColumnLabel}>You are owed</Text>
-                <Text style={styles.balanceColumnValue}>{formatRupees(dashboardData?.summary.owed ?? 0)}</Text>
+                <Text style={styles.balanceColumnValue}>{formatPaise(dashboardData?.summary.owed ?? 0)}</Text>
               </View>
               <View style={styles.balanceColumn}>
                 <Text style={styles.balanceColumnLabel}>You owe</Text>
-                <Text style={styles.balanceColumnValue}>{formatRupees(dashboardData?.summary.owe ?? 0)}</Text>
+                <Text style={styles.balanceColumnValue}>{formatPaise(dashboardData?.summary.owe ?? 0)}</Text>
               </View>
             </View>
           </LinearGradient>
