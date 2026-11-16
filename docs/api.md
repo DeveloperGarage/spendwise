@@ -270,7 +270,8 @@ The Expenses tab, newest first.
   "occurredOn": "2026-11-07",
   "categoryId": "c_food",
   "amount": 120000,
-  "split": { "mode": "equal", "memberIds": ["u_1", "u_2", "u_3"] },
+  "splitType": "equal",
+  "split": [{ "memberId": "u_1", "amount": 60000 }, {"memberId": "u_2", "amount": 60000 }],
   "fundingLines": [{ "memberId": "u_1", "amount": 120000 }]
 }
 ```
