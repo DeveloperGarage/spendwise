@@ -79,6 +79,20 @@ export const handlers = [
     return HttpResponse.json({ members: membersFactory({ groupId }) });
   }),
 
+  http.get(`${API_URL}/groups/:groupId/balances`, () => {
+    return HttpResponse.json({
+      members: [
+        { id: 'mock-user-1', displayName: 'Mock User', balance: 80000 },
+        { id: 'mock-user-2', displayName: 'Alex', balance: -40000 },
+        { id: 'mock-user-3', displayName: 'Sam', balance: -40000 },
+      ],
+      suggestion: [
+        { fromMemberId: 'mock-user-2', toMemberId: 'mock-user-1', amount: 40000 },
+        { fromMemberId: 'mock-user-3', toMemberId: 'mock-user-1', amount: 40000 },
+      ],
+    });
+  }),
+
   http.get(`${API_URL}/dashboard`, () => {
     return HttpResponse.json({
       user: { id: 'mock-user-1', displayName: 'Mock User' },

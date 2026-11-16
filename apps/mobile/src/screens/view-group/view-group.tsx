@@ -1,19 +1,23 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Href, router, useLocalSearchParams } from 'expo-router';
 
 import { PageHeader, SafeArea, ScreenContainer } from '@/custom-elements';
 import { Button } from '@/components/button';
 import { TextButton } from '@/components/text-button';
+import { BalanceList } from '@/components/balance-list';
 import { ExpenseList } from '@/components/expense-list';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
 import { createStyles } from '@/screens/view-group/view-group.styles';
-import { formatRupees } from '@/lib/money';
+import { GroupBalances } from '@/domain/models/balances';
 import { Group } from '@/domain/models/group';
 import { Expense } from '@/domain/models/expense';
-import { getExpensesForGroup, getGroupById } from '@/lib/api/groups';
+import { ApiError } from '@/lib/api/clients';
+import { getBalancesForGroup, getExpensesForGroup, getGroupById } from '@/lib/api/groups';
+import { formatPaise } from '@/lib/money';
+import { useMe } from '@/lib/session';
 
 type Tab = 'expenses' | 'balances' | 'activity';
 
@@ -31,7 +35,11 @@ export function ViewGroupScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [group, setGroup] = useState<Group | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [balances, setBalances] = useState<GroupBalances | null>(null);
+  const [balancesLoading, setBalancesLoading] = useState(false);
+  const [balancesError, setBalancesError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('expenses');
+  const { data: me } = useMe();
 
   const onAddExpense = () => router.push({ pathname: '/add-expense', params: { groupId: id } });
 
@@ -39,6 +47,23 @@ export function ViewGroupScreen() {
     getGroupById(id).then(setGroup).catch(console.error);
     getExpensesForGroup(id).then((data) => setExpenses(data.expenses)).catch(console.error);
   }, [id]);
+
+  useEffect(() => {
+    if (tab !== 'balances' || !id) return;
+    setBalancesLoading(true);
+    setBalancesError(null);
+    getBalancesForGroup(id)
+      .then(setBalances)
+      .catch((error) => {
+        setBalances(null);
+        if (error instanceof ApiError && error.status === 404) {
+          setBalancesError('Group not found.');
+        } else {
+          setBalancesError('Could not load balances.');
+        }
+      })
+      .finally(() => setBalancesLoading(false));
+  }, [tab, id]);
 
   const name = group?.name ?? 'Group';
   const balance = group?.balance ?? 0;
@@ -79,12 +104,15 @@ export function ViewGroupScreen() {
                   balance > 0 && styles.bannerPositive,
                   balance < 0 && styles.bannerNegative,
                 ]}>
-                {formatRupees(Math.abs(balance))}
+                {formatPaise(Math.abs(balance))}
               </Text>
             </View>
             <Pressable
               onPress={() => {
-                /* TODO: open the settle-up flow */
+                Alert.alert(
+                  'Settle up',
+                  'Recording payments will be available once settlements are wired.',
+                );
               }}
               accessibilityRole="button"
               style={({ pressed }) => [styles.settleButton, pressed && styles.pressed]}>
@@ -108,9 +136,16 @@ export function ViewGroupScreen() {
             })}
           </View>
 
-          {tab === 'expenses' ? (
-            <ExpenseList expenses={expenses} />
-          ) : (
+          {tab === 'expenses' && <ExpenseList expenses={expenses} />}
+          {tab === 'balances' && (
+            <BalanceList
+              balances={balances}
+              currentUserId={me?.id}
+              loading={balancesLoading}
+              error={balancesError}
+            />
+          )}
+          {tab === 'activity' && (
             <Text style={styles.placeholder}>Coming soon.</Text>
           )}
         </ScrollView>

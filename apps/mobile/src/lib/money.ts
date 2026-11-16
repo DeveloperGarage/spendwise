@@ -11,3 +11,13 @@ export function groupIndian(value: number): string {
 export function formatRupees(value: number): string {
   return `₹ ${groupIndian(value)}`;
 }
+
+/** Formats integer paise from the API (e.g. 156000 → "₹ 1,560.00"). */
+export function formatPaise(paise: number): string {
+  const sign = paise < 0 ? '-' : '';
+  const abs = Math.abs(paise);
+  const rupees = Math.trunc(abs / 100);
+  const rest = abs % 100;
+  const amount = `${groupIndian(rupees)}.${String(rest).padStart(2, '0')}`;
+  return `${sign}₹ ${amount}`;
+}

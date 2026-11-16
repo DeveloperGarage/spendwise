@@ -1,3 +1,4 @@
+import { GroupBalances } from '@/domain/models/balances';
 import {Group, Groups, POST_GROUP} from "@/domain/models/group";
 import {GetExpense} from "@/domain/models/expense";
 import {request} from "@/lib/api/clients";
@@ -12,6 +13,9 @@ export const getGroupById = (groupId: string) =>
 
 export const getExpensesForGroup = (groupId: string) =>
   request<GetExpense>(`/groups/${groupId}/expenses`);
+
+export const getBalancesForGroup = (groupId: string) =>
+  request<GroupBalances>(`/groups/${groupId}/balances`);
 
 export const createGroup = (group: POST_GROUP) =>
   request<Group>('/groups', {
