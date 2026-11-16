@@ -7,6 +7,7 @@ import type { AppEnv, SessionUser } from "../app-env.ts";
 import type { Database } from "../db/client.ts";
 import { errorBody } from "../errors.ts";
 import { registerExpenseRoutes } from "../expenses/routes.ts";
+import { registerSettlementRoutes } from "../settlements/routes.ts";
 import {
   addGroupMembers,
   createGroup,
@@ -161,6 +162,7 @@ export function mountGroupRoutes(db: Database) {
   });
 
   registerExpenseRoutes(groups, db);
+  registerSettlementRoutes(groups, db);
 
   return groups;
 }

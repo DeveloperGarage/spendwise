@@ -27,11 +27,11 @@ Tracked against `apps/api`. **Done** means the route is wired in Hono (tests whe
 | [`GET /groups/:groupId/expenses/:expenseId`](#get-groupsgroupidexpensesexpenseid) | Done |
 | [`PUT /groups/:groupId/expenses/:expenseId`](#put-groupsgroupidexpensesexpenseid) | Done |
 | [`POST /groups/:groupId/expenses/:expenseId/void`](#post-groupsgroupidexpensesexpenseidvoid) | Done |
-| [`POST /groups/:groupId/settlements`](#post-groupsgroupidsettlements) | — |
-| [`GET /groups/:groupId/settlements/:settlementId`](#get-groupsgroupidsettlementssettlementid) | — |
-| [`PUT /groups/:groupId/settlements/:settlementId`](#put-groupsgroupidsettlementssettlementid) | — |
-| [`POST /groups/:groupId/settlements/:settlementId/void`](#post-groupsgroupidsettlementssettlementidvoid) | — |
-| [`GET /groups/:groupId/settlements`](#get-groupsgroupidsettlements) | — |
+| [`POST /groups/:groupId/settlements`](#post-groupsgroupidsettlements) | Done |
+| [`GET /groups/:groupId/settlements/:settlementId`](#get-groupsgroupidsettlementssettlementid) | Done |
+| [`PUT /groups/:groupId/settlements/:settlementId`](#put-groupsgroupidsettlementssettlementid) | Done |
+| [`POST /groups/:groupId/settlements/:settlementId/void`](#post-groupsgroupidsettlementssettlementidvoid) | Done |
+| [`GET /groups/:groupId/settlements`](#get-groupsgroupidsettlements) | Done |
 | [`GET /groups/:groupId/balances`](#get-groupsgroupidbalances) | Done |
 | [`GET /groups/:groupId/activity`](#get-groupsgroupidactivity) | — |
 | [`GET /groups/:groupId/summary`](#get-groupsgroupidsummary) | — |
@@ -298,7 +298,7 @@ Replaces the expense. The body is the create body plus `version`.
 
 ## Settlements
 
-_Not implemented._
+_Done: list, create, detail, replace, and void._
 
 A settlement is its own collection. It has an `amount`, a sender, and a recipient. It has no category. A category field on the body is `422 VALIDATION_FAILED`.
 
