@@ -10,18 +10,18 @@ export type SplitLine = {
   amount: number;
 };
 
+/** The split modes the API accepts (see apps/api/src/expenses/parse-body.ts). */
+export type SplitMode = "equal" | "exact" | "percentage" | "shares";
+
 export type PostExpense = {
   note: string,
   occurredOn: string,
   amount: number,
-  splitMode: string,
+  splitMode: SplitMode,
   split: SplitLine[],
   categoryId: string,
   fundingLines: FundingLine[]
 };
-
-export type SplitMode = PostExpense['splitMode'];
-export type SplitLine = PostExpense['split'][number];
 
 /** The resolved output of the split editor: the chosen mode + per-participant amounts. */
 export type SplitValue = {

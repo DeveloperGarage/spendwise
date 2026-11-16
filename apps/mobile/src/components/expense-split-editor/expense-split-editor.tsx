@@ -20,7 +20,7 @@ type ExpenseSplitEditorProps = {
 const SPLIT_MODES: { key: SplitMode; label: string }[] = [
   {key: 'equal', label: 'Equally'},
   {key: 'exact', label: 'Exact'},
-  {key: 'percent', label: '%'},
+  {key: 'percentage', label: '%'},
 ];
 
 /**
@@ -47,7 +47,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
     let amounts: number[];
     if (mode === 'exact') {
       amounts = participants.map((member) => exactInput[member.id] ?? 0);
-    } else if (mode === 'percent') {
+    } else if (mode === 'percentage') {
       amounts = splitByWeights(total, participants.map((member) => percentInput[member.id] ?? 0));
     } else {
       amounts = splitEqually(total, participants.length);
@@ -116,7 +116,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
       );
     }
 
-    if (mode === 'percent') {
+    if (mode === 'percentage') {
       return (
         <View style={styles.editWrap}>
           <TextInput

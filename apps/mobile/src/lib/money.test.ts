@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { formatPaise } from './money';
 
 describe('formatPaise', () => {

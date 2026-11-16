@@ -20,12 +20,6 @@ import {Member} from "@/domain/models/members";
 import {useMe} from "@/lib/session";
 import {ExpenseSplitEditor} from "@/components/expense-split-editor/expense-split-editor";
 
-function splitModeForApi(mode: SplitMode): string {
-  if (mode === 'equally') return 'equal';
-  if (mode === 'percent') return 'percentage';
-  return 'exact';
-}
-
 export function AddExpenseScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -80,25 +74,15 @@ export function AddExpenseScreen() {
     setSelectedGroupId(groupId);
   }
 
-  const toggleMember = (id: string) => {
-    setSelected((prev) => ({ ...prev, [id]: !(prev[id] ?? true) }));
-  };
-
-  const createExpenseObject = (): PostExpense => {
-    const split = Object.entries(shares).map(([memberId, splitAmount]) => ({
-      memberId,
-      amount: splitAmount,
-    }));
-    return {
-      amount,
-      note: description,
-      occurredOn,
-      categoryId: 'c_8cad895abf23b8b2', // TODO: category selection should be dynamic
-      fundingLines: [{ memberId: effectivePaidBy, amount }],
-      splitMode: splitModeForApi(splitMode),
-      split,
-    };
-  };
+  const createExpenseObject = (): PostExpense => ({
+    amount,
+    note: description,
+    occurredOn,
+    categoryId: 'c_8cad895abf23b8b2', // TODO: category selection should be dynamic
+    fundingLines: [{memberId: effectivePaidBy, amount}],
+    splitMode: split.splitMode,
+    split: split.split,
+  });
 
   const goBack = useGoBack();
   const onCancel = goBack;
@@ -112,6 +96,15 @@ export function AddExpenseScreen() {
     }
     saveExpense(expense, selectedGroupId, saveAttempt.current.key).then(goBack).catch(console.error);
   };
+
+  useEffect(() => {
+    getGroupsForUser().then(setGroups).catch(console.error);
+  }, [me]);
+
+  useEffect(() => {
+    if (!selectedGroupId) return;
+    getMembersForGroup(selectedGroupId).then(setGroupMembers).catch(console.error);
+  }, [selectedGroupId]);
 
   return (
     <SafeArea>
@@ -172,56 +165,12 @@ export function AddExpenseScreen() {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Text style={styles.sectionLabel}>SPLIT</Text>
-            <View style={styles.segmentGroup}>
-              {SPLIT_MODES.map((mode) => {
-                const active = splitMode === mode.key;
-                return (
-                  <Pressable
-                    key={mode.key}
-                    onPress={() => setSplitMode(mode.key)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    style={[styles.segment, active && styles.segmentActive]}>
-                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                      {mode.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          <View style={styles.membersCard}>
-            {members.map((member, index) => {
-              const checked = isMemberSelected(member.id);
-              const share = shares[member.id] ?? 0;
-              return (
-                <Pressable
-                  key={member.id}
-                  onPress={() => toggleMember(member.id)}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked }}
-                  style={({ pressed }) => [
-                    styles.memberRow,
-                    index > 0 && styles.memberRowDivider,
-                    pressed && styles.pressed,
-                  ]}>
-                  <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-                    {checked ? <Text style={styles.checkboxCheck}>✓</Text> : null}
-                  </View>
-                  <Text style={styles.memberName}>{member.displayName}</Text>
-                  <Text style={[styles.memberAmount, share === 0 && styles.memberAmountZero]}>
-                    {formatRupees(share)}
-                  </Text>
-                </Pressable>
-              );
-            })}
+            <ExpenseSplitEditor members={roster} total={amount} onChange={setSplit}/>
           </View>
         </ScrollView>
 
         <View>
-          <Button label="Save Expense" onPress={onSave} />
+          <Button label="Save Expense" onPress={onSave} disabled={!canSave} />
         </View>
       </ScreenContainer>
     </SafeArea>
