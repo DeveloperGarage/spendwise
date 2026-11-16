@@ -79,6 +79,32 @@ export const handlers = [
     return HttpResponse.json({ members: membersFactory({ groupId }) });
   }),
 
+  http.get(`${API_URL}/groups/:groupId/activity`, () => {
+    return HttpResponse.json({
+      activities: [
+        {
+          id: 'act_1',
+          at: new Date().toISOString(),
+          actor: { id: 'mock-user-1', displayName: 'Mock User' },
+          kind: 'expense',
+          action: 'created',
+          subjectId: 'e_mock',
+          snapshot: { note: 'Dinner', amount: 120000 },
+        },
+        {
+          id: 'act_2',
+          at: new Date(Date.now() - 86400000).toISOString(),
+          actor: { id: 'mock-user-2', displayName: 'Alex' },
+          kind: 'settlement',
+          action: 'created',
+          subjectId: 's_mock',
+          snapshot: { amount: 40000, fromMemberId: 'mock-user-2', toMemberId: 'mock-user-1' },
+        },
+      ],
+      nextCursor: null,
+    });
+  }),
+
   http.get(`${API_URL}/groups/:groupId/balances`, () => {
     return HttpResponse.json({
       members: [

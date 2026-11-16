@@ -6,15 +6,18 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { PageHeader, SafeArea, ScreenContainer } from '@/custom-elements';
 import { Button } from '@/components/button';
 import { TextButton } from '@/components/text-button';
+import { ActivityList } from '@/components/activity-list';
 import { BalanceList } from '@/components/balance-list';
 import { ExpenseList } from '@/components/expense-list';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
 import { createStyles } from '@/screens/view-group/view-group.styles';
+import { ActivityItem } from '@/domain/models/activity';
 import { GroupBalances } from '@/domain/models/balances';
 import { Group } from '@/domain/models/group';
 import { Expense } from '@/domain/models/expense';
 import { ApiError } from '@/lib/api/clients';
+import { getActivityForGroup } from '@/lib/api/activity';
 import { getBalancesForGroup, getExpensesForGroup, getGroupById } from '@/lib/api/groups';
 import { formatPaise } from '@/lib/money';
 import { useMe } from '@/lib/session';
@@ -38,6 +41,9 @@ export function ViewGroupScreen() {
   const [balances, setBalances] = useState<GroupBalances | null>(null);
   const [balancesLoading, setBalancesLoading] = useState(false);
   const [balancesError, setBalancesError] = useState<string | null>(null);
+  const [activities, setActivities] = useState<ActivityItem[] | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('expenses');
   const { data: me } = useMe();
 
@@ -97,6 +103,33 @@ export function ViewGroupScreen() {
     useCallback(() => {
       refreshBalances();
     }, [refreshBalances]),
+  );
+
+  const refreshActivity = useCallback(() => {
+    if (tab !== 'activity' || !id) return;
+    setActivityLoading(true);
+    setActivityError(null);
+    getActivityForGroup(id)
+      .then((data) => setActivities(data.activities))
+      .catch((error) => {
+        setActivities(null);
+        if (error instanceof ApiError && error.status === 404) {
+          setActivityError('Group not found.');
+        } else {
+          setActivityError('Could not load activity.');
+        }
+      })
+      .finally(() => setActivityLoading(false));
+  }, [tab, id]);
+
+  useEffect(() => {
+    refreshActivity();
+  }, [refreshActivity]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshActivity();
+    }, [refreshActivity]),
   );
 
   const name = group?.name ?? 'Group';
@@ -176,7 +209,11 @@ export function ViewGroupScreen() {
             />
           )}
           {tab === 'activity' && (
-            <Text style={styles.placeholder}>Coming soon.</Text>
+            <ActivityList
+              activities={activities}
+              loading={activityLoading}
+              error={activityError}
+            />
           )}
         </ScrollView>
 
