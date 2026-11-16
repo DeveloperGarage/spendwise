@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 
+import { suggestTransfers } from "@spendwise/domain";
 import { and, eq } from "drizzle-orm";
 
 import type { Database } from "../db/client.ts";
@@ -69,6 +70,40 @@ export async function listGroupMembers(
   if (!group) return null;
   if (!(await isGroupMember(db, groupId, callerId))) return null;
   return membersForGroup(db, groupId);
+}
+
+export type GroupBalancesJson = {
+  members: { id: string; displayName: string; balance: number }[];
+  suggestion: { fromMemberId: string; toMemberId: string; amount: number }[];
+};
+
+export async function getGroupBalances(
+  db: Database,
+  groupId: string,
+  callerId: string,
+): Promise<GroupBalancesJson | null> {
+  const [group] = await db.select({ id: groups.id }).from(groups).where(eq(groups.id, groupId));
+  if (!group) return null;
+  if (!(await isGroupMember(db, groupId, callerId))) return null;
+
+  const members = await membersForGroup(db, groupId);
+  const memberIds = members.map((member) => member.id);
+  const balanceMap = await loadGroupBalances(db, groupId, memberIds);
+
+  const memberBalances = members.map((member) => ({
+    id: member.id,
+    displayName: member.displayName,
+    balance: balanceMap.get(member.id) ?? 0,
+  }));
+
+  const suggestion = suggestTransfers(
+    memberBalances.map((row) => ({ memberId: row.id, balance: row.balance })),
+  );
+
+  return {
+    members: memberBalances,
+    suggestion,
+  };
 }
 
 export async function getGroupDetail(

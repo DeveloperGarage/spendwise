@@ -11,6 +11,7 @@ import {
   addGroupMembers,
   createGroup,
   getDashboard,
+  getGroupBalances,
   getGroupDetail,
   isGroupMember,
   listGroupCards,
@@ -102,6 +103,20 @@ export function mountGroupRoutes(db: Database) {
       );
     }
     return c.json({ members });
+  });
+
+  groups.get("/groups/:groupId/balances", async (c) => {
+    const user = await requireSession(c, db);
+    if (user instanceof Response) return user;
+    const groupId = c.req.param("groupId");
+    const balances = await getGroupBalances(db, groupId, user.id);
+    if (!balances) {
+      return c.json(
+        errorBody("NOT_FOUND", "Group not found.", c.get("requestId")),
+        404,
+      );
+    }
+    return c.json(balances);
   });
 
   groups.post("/groups/:groupId/members", async (c) => {

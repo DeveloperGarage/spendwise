@@ -32,7 +32,7 @@ Tracked against `apps/api`. **Done** means the route is wired in Hono (tests whe
 | [`PUT /groups/:groupId/settlements/:settlementId`](#put-groupsgroupidsettlementssettlementid) | — |
 | [`POST /groups/:groupId/settlements/:settlementId/void`](#post-groupsgroupidsettlementssettlementidvoid) | — |
 | [`GET /groups/:groupId/settlements`](#get-groupsgroupidsettlements) | — |
-| [`GET /groups/:groupId/balances`](#get-groupsgroupidbalances) | — |
+| [`GET /groups/:groupId/balances`](#get-groupsgroupidbalances) | Done |
 | [`GET /groups/:groupId/activity`](#get-groupsgroupidactivity) | — |
 | [`GET /groups/:groupId/summary`](#get-groupsgroupidsummary) | — |
 | [`GET /groups/:groupId/categories`](#get-groupsgroupidcategories) | — |
@@ -334,7 +334,7 @@ Newest first, for a later list. The group screen's Expenses tab is expenses only
 
 ## Balances, activity, summary
 
-_Not implemented._
+_Done: balances read. Activity and summary not implemented._
 
 ### GET /groups/:groupId/balances
 
