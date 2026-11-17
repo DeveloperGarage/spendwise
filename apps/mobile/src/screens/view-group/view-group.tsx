@@ -21,6 +21,7 @@ import { getActivityForGroup } from '@/lib/api/activity';
 import { getBalancesForGroup, getExpensesForGroup, getGroupById } from '@/lib/api/groups';
 import { formatPaise } from '@/lib/money';
 import { useMe } from '@/lib/session';
+import { useGoBack } from '@/hooks/use-go-back';
 
 type Tab = 'expenses' | 'balances' | 'activity';
 
@@ -29,8 +30,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'balances', label: 'Balances' },
   { key: 'activity', label: 'Activity' },
 ];
-
-const onBack = () => router.back();
 
 export function ViewGroupScreen() {
   const theme = useTheme();
@@ -46,6 +45,7 @@ export function ViewGroupScreen() {
   const [activityError, setActivityError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('expenses');
   const { data: me } = useMe();
+  const onBack = useGoBack();
 
   const onAddExpense = () => router.push({ pathname: '/add-expense', params: { groupId: id } });
 
