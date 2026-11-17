@@ -1,0 +1,117 @@
+
+name: Technical Debt
+description: Track technical debt, refactoring, and code quality improvements
+title: "[TECH DEBT]: "
+labels:
+  - technical-debt
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to document technical debt that should be addressed
+        to improve maintainability, reliability, performance, or scalability.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the technical debt.
+      placeholder: What needs improvement?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current Implementation
+      description: Explain how the current implementation works and what is problematic.
+      placeholder: |
+        Currently, ...
+        This implementation has the following limitations ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Technical Concerns
+      description: Explain why the current implementation is problematic.
+      placeholder: |
+        - Difficult to maintain
+        - Code duplication
+        - Poor separation of concerns
+        - Performance bottleneck
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-approach
+    attributes:
+      label: Proposed Improvement
+      description: Describe the suggested refactoring or technical improvement.
+      placeholder: How should this be improved?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Technical Debt Category
+      description: Select the primary category.
+      options:
+        - Code Quality / Refactoring
+        - Architecture / Design
+        - Performance
+        - Security
+        - Testing / Test Coverage
+        - Dependencies / Upgrades
+        - Database / Data Model
+        - Infrastructure / DevOps
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      description: How significantly does this debt affect the project?
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: textarea
+    id: consequences
+    attributes:
+      label: Consequences of Not Addressing
+      description: What problems could arise if this debt remains unresolved?
+      placeholder: Describe potential maintenance, reliability, or scalability risks.
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Define when this technical debt can be considered resolved.
+      placeholder: |
+        - [ ] Existing functionality remains intact.
+        - [ ] Proposed refactoring is implemented.
+        - [ ] Relevant tests are added or updated.
+        - [ ] No new regressions are introduced.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add relevant file paths, code references, screenshots, or documentation links.
+    validations:
+      required: false
