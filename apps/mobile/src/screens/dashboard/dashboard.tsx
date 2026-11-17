@@ -6,7 +6,7 @@ import { Redirect, useRouter, type Href } from 'expo-router';
 import { Button } from '@/components/button';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
-import { formatPaise } from '@/lib/money';
+import {formatPaise, signedFormatPaise} from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { createStyles } from './dashboard.styles';
 import {ShowGroups} from "@/components/group-list";
@@ -85,8 +85,7 @@ export function DashboardScreen() {
             style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>NET BALANCE</Text>
             <Text style={styles.balanceValue}>
-              {net >= 0 ? '+ ' : '− '}
-              {formatPaise(net)}
+              {signedFormatPaise(net)}
             </Text>
             <View style={styles.balanceBreakdown}>
               <View style={styles.balanceColumn}>

@@ -12,10 +12,15 @@ export function groupIndian(value: number): string {
  * Money is paise everywhere except the text a person types; see docs/api.md.
  */
 export function formatPaise(paise: number): string {
-  const sign = paise < 0 ? '-' : '';
   const abs = Math.abs(paise);
   const rupees = Math.trunc(abs / 100);
   const rest = abs % 100;
   const amount = `${groupIndian(rupees)}.${String(rest).padStart(2, '0')}`;
-  return `${sign}₹ ${amount}`;
+  return `₹${amount}`;
+}
+
+export const signedFormatPaise = (paise: number): string => {
+  const sign = paise < 0 ? '-' : '';
+  const amount = formatPaise(paise);
+  return `${sign} ${amount}`;
 }

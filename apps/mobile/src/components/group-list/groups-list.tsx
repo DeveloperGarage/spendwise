@@ -42,7 +42,7 @@ export function GroupsList({groups, limit}: Readonly<{ groups: Groups, limit: nu
                 styles.groupAmount,
                 owed ? styles.groupAmountPositive : styles.groupAmountNegative,
               ]}>
-              {owed ? '+ ' : '− '}
+              {owed ? '+ ' : ''}
               {formatPaise(group.balance)}
             </Text>
           </Pressable>
