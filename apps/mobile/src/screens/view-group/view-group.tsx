@@ -8,6 +8,7 @@ import { Button } from '@/components/button';
 import { TextButton } from '@/components/text-button';
 import { ActivityList } from '@/components/activity-list';
 import { BalanceList } from '@/components/balance-list';
+import { SummaryList } from '@/components/summary-list';
 import { ExpenseList } from '@/components/expense-list';
 import { BRAND_GRADIENT } from '@/components/logo-badge';
 import { useTheme } from '@/hooks/use-theme';
@@ -18,16 +19,19 @@ import { Group } from '@/domain/models/group';
 import { Expense } from '@/domain/models/expense';
 import { ApiError } from '@/lib/api/clients';
 import { getActivityForGroup } from '@/lib/api/activity';
+import { getSummaryForGroup } from '@/lib/api/categories';
+import { GroupSummary } from '@/domain/models/summary';
 import { getBalancesForGroup, getExpensesForGroup, getGroupById } from '@/lib/api/groups';
 import { formatPaise } from '@/lib/money';
 import { useMe } from '@/lib/session';
 import { useGoBack } from '@/hooks/use-go-back';
 
-type Tab = 'expenses' | 'balances' | 'activity';
+type Tab = 'expenses' | 'balances' | 'summary' | 'activity';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'expenses', label: 'Expenses' },
   { key: 'balances', label: 'Balances' },
+  { key: 'summary', label: 'Summary' },
   { key: 'activity', label: 'Activity' },
 ];
 
@@ -43,6 +47,9 @@ export function ViewGroupScreen() {
   const [activities, setActivities] = useState<ActivityItem[] | null>(null);
   const [activityLoading, setActivityLoading] = useState(false);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<GroupSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('expenses');
   const { data: me } = useMe();
   const onBack = useGoBack();
@@ -103,6 +110,33 @@ export function ViewGroupScreen() {
     useCallback(() => {
       refreshBalances();
     }, [refreshBalances]),
+  );
+
+  const refreshSummary = useCallback(() => {
+    if (tab !== 'summary' || !id) return;
+    setSummaryLoading(true);
+    setSummaryError(null);
+    getSummaryForGroup(id)
+      .then(setSummary)
+      .catch((error) => {
+        setSummary(null);
+        if (error instanceof ApiError && error.status === 404) {
+          setSummaryError('Group not found.');
+        } else {
+          setSummaryError('Could not load summary.');
+        }
+      })
+      .finally(() => setSummaryLoading(false));
+  }, [tab, id]);
+
+  useEffect(() => {
+    refreshSummary();
+  }, [refreshSummary]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSummary();
+    }, [refreshSummary]),
   );
 
   const refreshActivity = useCallback(() => {
@@ -207,6 +241,9 @@ export function ViewGroupScreen() {
               error={balancesError}
               onSuggestionPress={(row) => openSettleUp(row)}
             />
+          )}
+          {tab === 'summary' && (
+            <SummaryList summary={summary} loading={summaryLoading} error={summaryError} />
           )}
           {tab === 'activity' && (
             <ActivityList

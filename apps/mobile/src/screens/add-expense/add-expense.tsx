@@ -15,7 +15,9 @@ import {PostExpense, SplitValue} from "@/domain/models/expense";
 import {getGroupsForUser} from "@/lib/api/groups";
 import {Groups} from "@/domain/models/group";
 import {useGoBack} from "@/hooks/use-go-back";
+import {getCategoriesForGroup} from "@/lib/api/categories";
 import {getMembersForGroup} from "@/lib/api/members";
+import {Category} from "@/domain/models/category";
 import {Member} from "@/domain/models/members";
 import {useMe} from "@/lib/session";
 import {ExpenseSplitEditor} from "@/components/expense-split-editor/expense-split-editor";
@@ -37,6 +39,8 @@ export function AddExpenseScreen() {
   const [occurredOn, setOccurredOn] = useState(todayIsoDate);
   const [paidBy, setPaidBy] = useState('');
   const [split, setSplit] = useState<SplitValue>({splitMode: 'equal', split: []});
+  const [groupCategories, setGroupCategories] = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState('');
 
   // The roster the expense can be split across; the signed-in user shows as "You".
   const roster = useMemo<Member[]>(() => {
@@ -65,7 +69,11 @@ export function AddExpenseScreen() {
   );
 
   const canSave =
-    !!selectedGroupId && amount > 0 && split.split.length > 0 && splitTotal === amount;
+    !!selectedGroupId &&
+    !!categoryId &&
+    amount > 0 &&
+    split.split.length > 0 &&
+    splitTotal === amount;
 
   const onAmountChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, '');
@@ -74,13 +82,19 @@ export function AddExpenseScreen() {
 
   const onGroupSelect = (groupId: string) => {
     setSelectedGroupId(groupId);
-  }
+    setCategoryId('');
+  };
+
+  const categoryOptions = useMemo(
+    () => groupCategories.map((category) => ({ id: category.id, label: category.name })),
+    [groupCategories],
+  );
 
   const createExpenseObject = (): PostExpense => ({
     amount,
     note: description,
     occurredOn,
-    categoryId: 'c_8cad895abf23b8b2', // TODO: category selection should be dynamic
+    categoryId,
     fundingLines: [{memberId: effectivePaidBy, amount}],
     splitMode: split.splitMode,
     split: split.split,
@@ -106,6 +120,14 @@ export function AddExpenseScreen() {
   useEffect(() => {
     if (!selectedGroupId) return;
     getMembersForGroup(selectedGroupId).then(setGroupMembers).catch(console.error);
+    getCategoriesForGroup(selectedGroupId)
+      .then((data) => {
+        setGroupCategories(data.categories);
+        const food = data.categories.find((row) => row.name === 'Food');
+        const fallback = food ?? data.categories[0];
+        if (fallback) setCategoryId(fallback.id);
+      })
+      .catch(console.error);
   }, [selectedGroupId]);
 
   return (
@@ -159,6 +181,17 @@ export function AddExpenseScreen() {
               selectedId={selectedGroupId}
               onSelect={onGroupSelect}
               emptyText="No groups yet"
+            />
+          </View>
+
+          <View style={styles.fieldBlock}>
+            <Dropdown
+              label="Category"
+              placeholder="Select a category"
+              options={categoryOptions}
+              selectedId={categoryId}
+              onSelect={setCategoryId}
+              emptyText={selectedGroupId ? 'No categories' : 'Pick a group first'}
             />
           </View>
 

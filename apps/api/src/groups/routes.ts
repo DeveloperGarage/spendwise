@@ -6,6 +6,7 @@ import { SESSION_COOKIE, userFromSessionCookie } from "../auth.ts";
 import type { AppEnv, SessionUser } from "../app-env.ts";
 import type { Database } from "../db/client.ts";
 import { errorBody } from "../errors.ts";
+import { registerCategoryRoutes } from "../categories/routes.ts";
 import { registerActivityRoutes } from "../activity/routes.ts";
 import { registerExpenseRoutes } from "../expenses/routes.ts";
 import { registerSettlementRoutes } from "../settlements/routes.ts";
@@ -165,6 +166,7 @@ export function mountGroupRoutes(db: Database) {
   registerExpenseRoutes(groups, db);
   registerSettlementRoutes(groups, db);
   registerActivityRoutes(groups, db);
+  registerCategoryRoutes(groups, db);
 
   return groups;
 }

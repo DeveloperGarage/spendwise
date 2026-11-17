@@ -43,7 +43,12 @@ export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
             <View style={styles.info}>
               <Text style={styles.title}>{expense.note || 'Expense'}</Text>
               <Text style={styles.subtitle}>
-                {expense.payer?.displayName ?? 'Someone'} paid {formatPaise(expense.amount)}
+                {[
+                  expense.category?.name,
+                  `${expense.payer?.displayName ?? 'Someone'} paid ${formatPaise(expense.amount)}`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </Text>
             </View>
 

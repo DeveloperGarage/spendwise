@@ -34,10 +34,10 @@ Tracked against `apps/api`. **Done** means the route is wired in Hono (tests whe
 | [`GET /groups/:groupId/settlements`](#get-groupsgroupidsettlements) | Done |
 | [`GET /groups/:groupId/balances`](#get-groupsgroupidbalances) | Done |
 | [`GET /groups/:groupId/activity`](#get-groupsgroupidactivity) | Done |
-| [`GET /groups/:groupId/summary`](#get-groupsgroupidsummary) | — |
-| [`GET /groups/:groupId/categories`](#get-groupsgroupidcategories) | — |
-| [`POST /groups/:groupId/categories`](#post-groupsgroupidcategories) | — |
-| [`PATCH /groups/:groupId/categories/:categoryId`](#patch-groupsgroupidcategoriescategoryid) | — |
+| [`GET /groups/:groupId/summary`](#get-groupsgroupidsummary) | Done |
+| [`GET /groups/:groupId/categories`](#get-groupsgroupidcategories) | Done |
+| [`POST /groups/:groupId/categories`](#post-groupsgroupidcategories) | Done |
+| [`PATCH /groups/:groupId/categories/:categoryId`](#patch-groupsgroupidcategoriescategoryid) | Done |
 
 ## Conventions
 
@@ -280,7 +280,7 @@ Phase 1 accepts one funding line, and that line's `amount` equals the expense `a
 
 Every mode uses the same `split` array: `{ "memberId", "amount" }[]`. Each `amount` is an integer in paise. The client calculates the shares. The server stores them and checks that they sum to the expense `amount`. A mismatch is `422 SPLIT_REFUSED` with `details.gap` set to the difference in paise.
 
-The Add expense frame shows Equally, Exact, and %. `shares` stays on the API so the screen can hide it without a second split. `categoryId` and `occurredOn` stay required. The current frame does not draw those controls yet.
+The Add expense frame shows Equally, Exact, and %. `shares` stays on the API so the screen can hide it without a second split. `categoryId` and `occurredOn` stay required.
 
 `fundingLines` is an array so a later second payer is another line, not a new route. `accountId` stays off the JSON until accounts exist.
 
@@ -334,7 +334,7 @@ Newest first, for a later list. The group screen's Expenses tab is expenses only
 
 ## Balances, activity, summary
 
-_Done: balances and activity read. Summary not implemented._
+_Done: balances, activity, and summary read._
 
 ### GET /groups/:groupId/balances
 
@@ -371,13 +371,15 @@ Trip totals. Live expenses the list has scrolled past are included. Voided rows 
 
 ## Categories
 
-_Not implemented_ (seed categories on `POST /groups` are **Done**).
-
-Category routes are not wired in the first client frames. They are still part of Phase 1 on the API; create group seeds the defaults.
+_Done: list, create, and rename. Seed categories on `POST /groups` are **Done**._
 
 ### GET /groups/:groupId/categories
 
 The group's categories, seed names included.
+
+```json
+{ "categories": [{ "id": "c_food", "name": "Food" }] }
+```
 
 ### POST /groups/:groupId/categories
 

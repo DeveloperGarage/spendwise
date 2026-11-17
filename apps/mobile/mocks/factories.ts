@@ -41,6 +41,32 @@ export const expensesFactory = (overrides: any = {}): any =>
 const membersTemplate =
   { id: 'm1', displayName: 'You', email: 'you@example.com' }
 
+const SEED_CATEGORIES = [
+  { id: 'c_food', name: 'Food' },
+  { id: 'c_stay', name: 'Stay' },
+  { id: 'c_transport', name: 'Transport' },
+  { id: 'c_activities', name: 'Activities' },
+  { id: 'c_shopping', name: 'Shopping' },
+  { id: 'c_groceries', name: 'Groceries' },
+  { id: 'c_other', name: 'Other' },
+];
+
+export const categoriesFactory = () => ({ categories: SEED_CATEGORIES });
+
+export const summaryFactory = (overrides: Partial<{ total: number }> = {}) => ({
+  currency: 'INR',
+  total: overrides.total ?? 320000,
+  members: [
+    { id: 'mock-user-1', displayName: 'Mock User', share: 120000 },
+    { id: 'mock-user-2', displayName: 'Alex', share: 100000 },
+    { id: 'mock-user-3', displayName: 'Sam', share: 100000 },
+  ],
+  categories: [
+    { id: 'c_food', name: 'Food', amount: 200000 },
+    { id: 'c_transport', name: 'Transport', amount: 120000 },
+  ],
+});
+
 export const membersFactory = (overrides: any = {}): any[] =>
   Array.from({ length: 3 }, (_, i) => ({
     ...membersTemplate,

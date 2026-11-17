@@ -1,7 +1,13 @@
 import { http, HttpResponse } from 'msw';
 
 import {Me, request} from '@/lib/api/clients';
-import {groupsFactory, expensesFactory, membersFactory} from "./factories";
+import {
+  categoriesFactory,
+  expensesFactory,
+  groupsFactory,
+  membersFactory,
+  summaryFactory,
+} from './factories';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 const STORAGE_KEY = 'spendwise.mock.session';
@@ -103,6 +109,14 @@ export const handlers = [
       ],
       nextCursor: null,
     });
+  }),
+
+  http.get(`${API_URL}/groups/:groupId/categories`, () => {
+    return HttpResponse.json(categoriesFactory());
+  }),
+
+  http.get(`${API_URL}/groups/:groupId/summary`, () => {
+    return HttpResponse.json(summaryFactory());
   }),
 
   http.get(`${API_URL}/groups/:groupId/balances`, () => {
