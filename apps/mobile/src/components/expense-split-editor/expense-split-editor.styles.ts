@@ -29,6 +29,7 @@ export const createStyles = (theme: Theme) =>
     },
     segmentText: {
       ...Typography.bodyStrong,
+      fontSize: 14,
       color: theme.textSecondary,
     },
     segmentTextActive: {
@@ -121,6 +122,17 @@ export const createStyles = (theme: Theme) =>
       color: theme.textSecondary,
       minWidth: 64,
       textAlign: 'right',
+    },
+
+    totalsHint: {
+      ...Typography.caption,
+      color: theme.textSecondary,
+      paddingHorizontal: Spacing.lg,
+      paddingBottom: Spacing.md,
+      paddingTop: Spacing.xs,
+    },
+    totalsHintError: {
+      color: theme.negative,
     },
 
     pressed: {

@@ -38,7 +38,7 @@ export function AddExpenseScreen() {
   const [description, setDescription] = useState("");
   const [occurredOn, setOccurredOn] = useState(todayIsoDate);
   const [paidBy, setPaidBy] = useState('');
-  const [split, setSplit] = useState<SplitValue>({splitMode: 'equal', split: []});
+  const [split, setSplit] = useState<SplitValue>({splitMode: 'equal', split: [], inputsValid: false});
   const [groupCategories, setGroupCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState('');
 
@@ -72,6 +72,7 @@ export function AddExpenseScreen() {
     !!selectedGroupId &&
     !!categoryId &&
     amount > 0 &&
+    split.inputsValid &&
     split.split.length > 0 &&
     splitTotal === amount;
 

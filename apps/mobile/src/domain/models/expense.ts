@@ -27,6 +27,7 @@ export type PostExpense = {
 export type SplitValue = {
   splitMode: SplitMode;
   split: SplitLine[];
+  inputsValid: boolean;
 };
 
 export type Expense = {

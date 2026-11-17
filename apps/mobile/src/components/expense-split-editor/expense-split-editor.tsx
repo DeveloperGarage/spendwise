@@ -4,6 +4,7 @@ import {Pressable, Text, TextInput, View} from "react-native";
 import {useTheme} from "@/hooks/use-theme";
 import {formatPaise} from "@/lib/money";
 import {splitByWeights, splitEqually} from "@/lib/split";
+import {percentTotal, splitInputsValid} from "@/lib/split-validation";
 import {Member} from "@/domain/models/members";
 import {SplitMode, SplitValue} from "@/domain/models/expense";
 import {createStyles} from "./expense-split-editor.styles";
@@ -20,6 +21,7 @@ type ExpenseSplitEditorProps = {
 const SPLIT_MODES: { key: SplitMode; label: string }[] = [
   {key: 'equal', label: 'Equally'},
   {key: 'exact', label: 'Exact'},
+  {key: 'shares', label: 'Shares'},
   {key: 'percentage', label: '%'},
 ];
 
@@ -36,19 +38,24 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
   const [mode, setMode] = useState<SplitMode>('equal');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [exactInput, setExactInput] = useState<Record<string, number>>({});
+  const [sharesInput, setSharesInput] = useState<Record<string, number>>({});
   const [percentInput, setPercentInput] = useState<Record<string, number>>({});
+  const [percentTouched, setPercentTouched] = useState(false);
 
   const isSelected = (memberId: string) => selected[memberId] ?? true;
 
   // Resolved split: participants + their integer shares. Derived, never stored.
   const value = useMemo<SplitValue>(() => {
     const participants = members.filter((member) => isSelected(member.id));
+    const participantIds = participants.map((member) => member.id);
 
     let amounts: number[];
     if (mode === 'exact') {
       amounts = participants.map((member) => exactInput[member.id] ?? 0);
     } else if (mode === 'percentage') {
       amounts = splitByWeights(total, participants.map((member) => percentInput[member.id] ?? 0));
+    } else if (mode === 'shares') {
+      amounts = splitByWeights(total, participants.map((member) => sharesInput[member.id] ?? 0));
     } else {
       amounts = splitEqually(total, participants.length);
     }
@@ -59,9 +66,10 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
         memberId: member.id,
         amount: amounts[index] ?? 0,
       })),
+      inputsValid: splitInputsValid(mode, participantIds, percentInput, sharesInput),
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [members, selected, mode, total, exactInput, percentInput]);
+  }, [members, selected, mode, total, exactInput, percentInput, sharesInput]);
 
   // Publish the resolved value upward whenever it actually changes. Kept in a
   // ref so a non-memoised `onChange` can't retrigger the effect.
@@ -80,6 +88,17 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
     });
     return map;
   }, [value]);
+
+  const participantIds = useMemo(
+    () => members.filter((member) => isSelected(member.id)).map((member) => member.id),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [members, selected],
+  );
+
+  const percentSum = useMemo(
+    () => percentTotal(participantIds, percentInput),
+    [participantIds, percentInput],
+  );
 
   const toggleMember = (memberId: string) => {
     setSelected((prev) => ({...prev, [memberId]: !(prev[memberId] ?? true)}));
@@ -117,13 +136,34 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
       );
     }
 
+    if (mode === 'shares') {
+      return (
+        <View style={styles.editWrap}>
+          <TextInput
+            style={styles.editInput}
+            value={sharesInput[member.id] ? String(sharesInput[member.id]) : ''}
+            onChangeText={(text) => setMemberInput(setSharesInput, member.id, text)}
+            keyboardType="number-pad"
+            placeholder="0"
+            placeholderTextColor={theme.textSecondary}
+            accessibilityLabel={`Share count for ${member.displayName}`}
+          />
+          <Text style={styles.editAffix}>shares</Text>
+          <Text style={styles.resolvedShare}>{formatPaise(shareById[member.id] ?? 0)}</Text>
+        </View>
+      );
+    }
+
     if (mode === 'percentage') {
       return (
         <View style={styles.editWrap}>
           <TextInput
             style={styles.editInput}
             value={percentInput[member.id] ? String(percentInput[member.id]) : ''}
-            onChangeText={(text) => setMemberInput(setPercentInput, member.id, text)}
+            onChangeText={(text) => {
+              setPercentTouched(true);
+              setMemberInput(setPercentInput, member.id, text);
+            }}
             keyboardType="number-pad"
             placeholder="0"
             placeholderTextColor={theme.textSecondary}
@@ -142,6 +182,8 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
       </Text>
     );
   };
+
+  const percentHintInvalid = mode === 'percentage' && percentTouched && percentSum !== 100;
 
   return (
     <View>
@@ -185,6 +227,15 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
             </View>
           );
         })}
+        {mode === 'percentage' ? (
+          <Text
+            style={[
+              styles.totalsHint,
+              percentHintInvalid && styles.totalsHintError,
+            ]}>
+            Total: {percentSum}% (must be 100%)
+          </Text>
+        ) : null}
       </View>
     </View>
   );

@@ -280,7 +280,7 @@ Phase 1 accepts one funding line, and that line's `amount` equals the expense `a
 
 Every mode uses the same `split` array: `{ "memberId", "amount" }[]`. Each `amount` is an integer in paise. The client calculates the shares. The server stores them and checks that they sum to the expense `amount`. A mismatch is `422 SPLIT_REFUSED` with `details.gap` set to the difference in paise.
 
-The Add expense frame shows Equally, Exact, and %. `shares` stays on the API so the screen can hide it without a second split. `categoryId` and `occurredOn` stay required.
+The Add expense frame shows Equally, Exact, Shares, and %. Percent inputs must sum to 100% before save. `categoryId` and `occurredOn` stay required.
 
 `fundingLines` is an array so a later second payer is another line, not a new route. `accountId` stays off the JSON until accounts exist.
 
