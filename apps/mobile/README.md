@@ -56,6 +56,14 @@ npm run web:mock
 - You start signed in. The session is stored in localStorage under
   `spendwise.mock.session`; delete it to reset.
 
+### Install on a phone
+
+The web export includes a PWA manifest with 192px and 512px icons for Android and
+an Apple touch icon for iOS. These are generated from `assets/images/logo.svg`;
+the web favicon is separate and is not used as the installed app icon.
+After deploying icon changes, remove the existing home-screen app and install it
+again so the phone refreshes its cached icon and launch screen.
+
 ## Testing, lint, typecheck
 
 ```bash
