@@ -40,12 +40,12 @@ A group can leave Splitwise for this trip.
 
 - Google sign-in for allowlisted emails. First-open display name. Groups. The creator (or any member) adds people by email who have already signed in. No invite link in the beta. The client is a PWA on any device.
 - Add, edit, and void an expense. Any member can correct an entry. Void keeps the row and drops it from the balances. An activity list shows who changed what.
-- Split equally, by exact amounts, by percentage, or by shares. One payer per expense.
+- Split equally, by exact amounts, by percentage, or by shares. One or more payers per expense (funding lines that sum to the gross).
 - Flat categories the group can rename and extend: Food, Stay, Transport, Activities, Shopping, Groceries, Other.
 - Balances, a short settle-up suggestion, and a recorded settlement between two members.
 - A trip summary: total spent, each person's share, totals by category. Expenses scrolled out of the list still count.
 
-Two people paying one bill are entered as two expenses. The stored entry can already hold several payers, so a later screen does not have to rewrite old trips.
+Several people paying one bill are recorded as multiple funding lines on a single expense.
 
 ### Phase 2 — Personal and shared together
 
@@ -86,7 +86,7 @@ The group can record every shared trip expense, see who owes whom, and record se
 
 ## Out of the beta
 
-Offline entry. Native Android or iOS apps. More than one currency. More than one payer on a single expense. Receipt photos. Comment threads. Charts beyond the trip summary. Personal accounts, income, budgets, and repeating transactions. Payments. Leaving a group mid-trip. Public signup.
+Offline entry. Native Android or iOS apps. More than one currency. Receipt photos. Comment threads. Charts beyond the trip summary. Personal accounts, income, budgets, and repeating transactions. Payments. Leaving a group mid-trip. Public signup.
 
 ## Standard tracker features, by the phase that adds them
 

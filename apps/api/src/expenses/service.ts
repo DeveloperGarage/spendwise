@@ -28,7 +28,7 @@ export type ExpenseListItemJson = {
   occurredOn: string;
   category: { id: string; name: string };
   amount: number;
-  payer: { id: string; displayName: string };
+  payers: { id: string; displayName: string; amount: number }[];
   caller: { paid: number; share: number; effect: string; effectAmount: number };
   voided: boolean;
 };
@@ -78,11 +78,25 @@ async function loadExpenseJson(
     .where(eq(expenseAllocationLines.expenseId, expenseId));
 
   if (fundingRows.length === 0) return null;
-  const payerId = fundingRows[0].memberId;
-  const [payer] = await db
-    .select({ id: users.id, displayName: users.displayName })
-    .from(users)
-    .where(eq(users.id, payerId));
+
+  const payerIds = fundingRows.map((line) => line.memberId);
+  const payerUsers =
+    payerIds.length === 0
+      ? []
+      : await db
+          .select({ id: users.id, displayName: users.displayName })
+          .from(users)
+          .where(inArray(users.id, payerIds));
+  const nameById = new Map(payerUsers.map((row) => [row.id, row.displayName]));
+  const payers = fundingRows
+    .map((line) => ({
+      id: line.memberId,
+      displayName: nameById.get(line.memberId) ?? "",
+      amount: amountToJson(line.amountPaise),
+    }))
+    .sort(
+      (a, b) => b.amount - a.amount || a.displayName.localeCompare(b.displayName),
+    );
 
   const expenseInput = {
     voided: row.voidedAt !== null,
@@ -104,7 +118,7 @@ async function loadExpenseJson(
     occurredOn: String(row.occurredOn),
     category: category ?? { id: row.categoryId, name: "" },
     amount: amountToJson(row.grossPaise),
-    payer: payer ?? { id: payerId, displayName: "" },
+    payers,
     caller: {
       paid: amountToJson(caller.paid),
       share: amountToJson(caller.share),
@@ -163,7 +177,8 @@ export async function createExpense(
 
   const memberIds = new Set(await memberIdsForGroup(db, groupId));
   const splitMembers = parsed.split.map((line) => line.memberId);
-  const allReferenced = new Set([parsed.fundingMemberId, ...splitMembers]);
+  const fundingMembers = parsed.fundingLines.map((line) => line.memberId);
+  const allReferenced = new Set([...fundingMembers, ...splitMembers]);
   for (const id of allReferenced) {
     if (!memberIds.has(id)) {
       return { ok: false, kind: "field", field: "split" };
@@ -214,12 +229,14 @@ export async function createExpense(
       createdBy: callerId,
     });
 
-    await tx.insert(expenseFundingLines).values({
-      id: `f_${randomBytes(8).toString("hex")}`,
-      expenseId,
-      memberId: parsed.fundingMemberId,
-      amountPaise: parsed.amount,
-    });
+    for (const line of parsed.fundingLines) {
+      await tx.insert(expenseFundingLines).values({
+        id: `f_${randomBytes(8).toString("hex")}`,
+        expenseId,
+        memberId: line.memberId,
+        amountPaise: line.amount,
+      });
+    }
 
     for (const line of parsed.split) {
       await tx.insert(expenseAllocationLines).values({
@@ -253,7 +270,7 @@ export async function createExpense(
         categoryId: parsed.categoryId,
         amount: parsed.amount,
         splitMode,
-        fundingMemberId: parsed.fundingMemberId,
+        fundingLines: parsed.fundingLines,
       },
     });
 
@@ -453,7 +470,8 @@ async function validateExpenseWrite(
 ): Promise<WriteValidation> {
   const memberIds = new Set(await memberIdsForGroup(db, groupId));
   const splitMembers = parsed.split.map((line) => line.memberId);
-  const allReferenced = new Set([parsed.fundingMemberId, ...splitMembers]);
+  const fundingMembers = parsed.fundingLines.map((line) => line.memberId);
+  const allReferenced = new Set([...fundingMembers, ...splitMembers]);
   for (const id of allReferenced) {
     if (!memberIds.has(id)) {
       return { ok: false, kind: "field", field: "split" };
@@ -557,12 +575,14 @@ export async function replaceExpense(
     await tx.delete(expenseFundingLines).where(eq(expenseFundingLines.expenseId, expenseId));
     await tx.delete(expenseAllocationLines).where(eq(expenseAllocationLines.expenseId, expenseId));
 
-    await tx.insert(expenseFundingLines).values({
-      id: `f_${randomBytes(8).toString("hex")}`,
-      expenseId,
-      memberId: parsed.fundingMemberId,
-      amountPaise: parsed.amount,
-    });
+    for (const line of parsed.fundingLines) {
+      await tx.insert(expenseFundingLines).values({
+        id: `f_${randomBytes(8).toString("hex")}`,
+        expenseId,
+        memberId: line.memberId,
+        amountPaise: line.amount,
+      });
+    }
 
     for (const line of parsed.split) {
       await tx.insert(expenseAllocationLines).values({

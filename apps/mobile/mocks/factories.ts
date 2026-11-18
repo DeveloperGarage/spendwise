@@ -25,7 +25,7 @@ const expensesTemplate = {
       "occurredOn": "2026-11-07",
       "category": { "id": "c_food", "name": "Food" },
       "amount": 120000,
-      "payer": { "id": "u_1", "displayName": "Aman" },
+      "payers": [{ "id": "u_1", "displayName": "Aman", "amount": 120000 }],
       "caller": { "paid": 120000, "share": 40000, "effect": "lent", "effectAmount": 80000 },
       "voided": false
     }

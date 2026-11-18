@@ -85,7 +85,7 @@ balance = paid − share + sent − received
 
 A positive balance means the group owes that member.
 
-Several payers on one expense are several funding lines. The rule does not change. Phase 1 records that situation as two expenses, each with one payer.
+Several payers on one expense are several funding lines on the same expense. Each line's amount must be greater than zero and the lines must sum to the gross.
 
 ## Invariants
 

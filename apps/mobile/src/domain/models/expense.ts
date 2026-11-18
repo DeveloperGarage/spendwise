@@ -46,7 +46,7 @@ export type Expense = {
   occurredOn: string,
   amount: number,
   version: number,
-  payer: { id: string, displayName: string },
+  payers: { id: string; displayName: string; amount: number }[];
   caller: { paid: number, share: number, effect: string, effectAmount: number },
   category: { id: string, name: string },
   voided: boolean

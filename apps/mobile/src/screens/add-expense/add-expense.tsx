@@ -21,6 +21,7 @@ import {Category} from "@/domain/models/category";
 import {Member} from "@/domain/models/members";
 import {useMe} from "@/lib/session";
 import {ExpenseSplitEditor} from "@/components/expense-split-editor/expense-split-editor";
+import {ExpenseFundingEditor, FundingValue} from "@/components/expense-funding-editor";
 
 export function AddExpenseScreen() {
   const theme = useTheme();
@@ -37,7 +38,7 @@ export function AddExpenseScreen() {
   const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState("");
   const [occurredOn, setOccurredOn] = useState(todayIsoDate);
-  const [paidBy, setPaidBy] = useState('');
+  const [funding, setFunding] = useState<FundingValue>({fundingLines: [], inputsValid: false});
   const [split, setSplit] = useState<SplitValue>({splitMode: 'equal', split: [], inputsValid: false});
   const [groupCategories, setGroupCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState('');
@@ -50,16 +51,9 @@ export function AddExpenseScreen() {
     );
   }, [selectedGroupId, groupMembers, me]);
 
-  const effectivePaidBy = paidBy || me?.id || '';
-
   const groupOptions = useMemo(
     () => groups.map((group) => ({id: group.id, label: group.name})),
     [groups],
-  );
-
-  const payeeOptions = useMemo(
-    () => roster.map((member) => ({id: member.id, label: member.displayName})),
-    [roster],
   );
 
   // The expense balances only when the participant shares add up to the total.
@@ -72,6 +66,7 @@ export function AddExpenseScreen() {
     !!selectedGroupId &&
     !!categoryId &&
     amount > 0 &&
+    funding.inputsValid &&
     split.inputsValid &&
     split.split.length > 0 &&
     splitTotal === amount;
@@ -96,7 +91,7 @@ export function AddExpenseScreen() {
     note: description,
     occurredOn,
     categoryId,
-    fundingLines: [{memberId: effectivePaidBy, amount}],
+    fundingLines: funding.fundingLines,
     splitMode: split.splitMode,
     split: split.split,
   });
@@ -197,7 +192,12 @@ export function AddExpenseScreen() {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Dropdown label="Paid by" options={payeeOptions} selectedId={effectivePaidBy} onSelect={setPaidBy} />
+            <ExpenseFundingEditor
+              members={roster}
+              total={amount}
+              defaultMemberId={me?.id}
+              onChange={setFunding}
+            />
           </View>
 
           <View style={styles.fieldBlock}>

@@ -1,5 +1,6 @@
 import { ExpenseDetail, SplitMode } from '@/domain/models/expense';
 import type { ExpenseSplitInitial } from '@/components/expense-split-editor/expense-split-editor';
+import type { ExpenseFundingInitial } from '@/components/expense-funding-editor/expense-funding-editor';
 
 function gcd(a: number, b: number): number {
   let x = Math.abs(a);
@@ -37,6 +38,19 @@ export function shareWeightsFromAmounts(amounts: number[]): number[] {
   if (positive.length === 0) return amounts.map(() => 1);
   const divisor = gcdMany(positive);
   return amounts.map((amount) => (amount > 0 ? amount / divisor : 0));
+}
+
+/** Build funding editor seed from GET expense detail funding lines. */
+export function fundingInitialFromDetail(
+  fundingLines: ExpenseDetail['fundingLines'],
+): ExpenseFundingInitial {
+  const selected: Record<string, boolean> = {};
+  const amounts: Record<string, number> = {};
+  for (const line of fundingLines) {
+    selected[line.memberId] = true;
+    amounts[line.memberId] = line.amount;
+  }
+  return { selected, amounts };
 }
 
 /** Build split editor seed from GET expense detail and full group roster ids. */

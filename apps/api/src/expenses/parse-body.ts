@@ -13,7 +13,7 @@ export type ParsedCreateExpense = {
   amount: number;
   splitMode: string;
   split: SplitLine[];
-  fundingMemberId: string;
+  fundingLines: SplitLine[];
 };
 
 export type ParseCreateErr =
@@ -54,22 +54,10 @@ export function parseCreateExpenseBody(body: unknown): ParsedCreateExpense | Par
 
   const note = typeof record.note === "string" ? record.note : "";
 
-  const fundingLines = record.fundingLines;
-  if (!Array.isArray(fundingLines) || fundingLines.length !== 1) {
-    return { kind: "field", field: "fundingLines" };
-  }
-  const funding = fundingLines[0];
-  if (funding === null || typeof funding !== "object") {
-    return { kind: "field", field: "fundingLines" };
-  }
-  const fundingRow = funding as { memberId?: unknown; amount?: unknown; accountId?: unknown };
-  if ("accountId" in fundingRow && fundingRow.accountId !== undefined) {
-    return { kind: "field", field: "fundingLines" };
-  }
-  const fundingMemberId = typeof fundingRow.memberId === "string" ? fundingRow.memberId.trim() : "";
-  if (!fundingMemberId) return { kind: "field", field: "fundingLines" };
-  const fundingAmount = readAmount(fundingRow.amount);
-  if (!fundingAmount.ok || fundingAmount.amount !== amount.amount) {
+  const fundingParsed = parseFundingLines(record.fundingLines);
+  if ("field" in fundingParsed) return { kind: "field", field: fundingParsed.field };
+  const fundingSum = fundingParsed.lines.reduce((sum, line) => sum + line.amount, 0);
+  if (fundingSum !== amount.amount) {
     return { kind: "field", field: "fundingLines" };
   }
 
@@ -93,8 +81,31 @@ export function parseCreateExpenseBody(body: unknown): ParsedCreateExpense | Par
     amount: amount.amount,
     splitMode: splitModeRaw,
     split: splitLines.lines,
-    fundingMemberId,
+    fundingLines: fundingParsed.lines,
   };
+}
+
+function parseFundingLines(fundingLines: unknown): { lines: SplitLine[] } | { field: string } {
+  if (!Array.isArray(fundingLines) || fundingLines.length === 0) {
+    return { field: "fundingLines" };
+  }
+  const seen = new Set<string>();
+  const lines: SplitLine[] = [];
+  for (const row of fundingLines) {
+    if (row === null || typeof row !== "object") return { field: "fundingLines" };
+    const fundingRow = row as { memberId?: unknown; amount?: unknown; accountId?: unknown };
+    if ("accountId" in fundingRow && fundingRow.accountId !== undefined) {
+      return { field: "fundingLines" };
+    }
+    const memberId =
+      typeof fundingRow.memberId === "string" ? fundingRow.memberId.trim() : "";
+    const amt = readAmount(fundingRow.amount);
+    if (!memberId || !amt.ok || amt.amount <= 0) return { field: "fundingLines" };
+    if (seen.has(memberId)) return { field: "fundingLines" };
+    seen.add(memberId);
+    lines.push({ memberId, amount: amt.amount });
+  }
+  return { lines };
 }
 
 function parseSplitLines(split: unknown): { lines: SplitLine[] } | { field: string } {

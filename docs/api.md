@@ -249,7 +249,10 @@ The Expenses tab, newest first.
       "occurredOn": "2026-11-07",
       "category": { "id": "c_food", "name": "Food" },
       "amount": 120000,
-      "payer": { "id": "u_1", "displayName": "Aman" },
+      "payers": [
+        { "id": "u_1", "displayName": "Aman", "amount": 80000 },
+        { "id": "u_2", "displayName": "Sam", "amount": 40000 }
+      ],
       "caller": { "paid": 120000, "share": 40000, "effect": "lent", "effectAmount": 80000 },
       "voided": false
     }
@@ -258,7 +261,7 @@ The Expenses tab, newest first.
 }
 ```
 
-`caller.effect` is `lent`, `paid`, or `owe` for that expense alone. `describeExpenseForMember` in `packages/domain` produces it, so every client uses the same words. A cab that Sam paid, where the caller's share is ₹350, is `effect: "owe"` with Sam as `payer`.
+`payers` lists everyone who funded the expense, with how much each paid in paise (sorted by amount, then name). `caller.effect` is `lent`, `paid`, or `owe` for that expense alone. `describeExpenseForMember` in `packages/domain` produces it, so every client uses the same words. A cab that Sam paid, where the caller's share is ₹350, is `effect: "owe"` with Sam in `payers`.
 
 ### POST /groups/:groupId/expenses
 
@@ -272,17 +275,20 @@ The Expenses tab, newest first.
   "amount": 120000,
   "splitMode": "equal",
   "split": [{ "memberId": "u_1", "amount": 60000 }, {"memberId": "u_2", "amount": 60000 }],
-  "fundingLines": [{ "memberId": "u_1", "amount": 120000 }]
+  "fundingLines": [
+    { "memberId": "u_1", "amount": 80000 },
+    { "memberId": "u_2", "amount": 40000 }
+  ]
 }
 ```
 
-Phase 1 accepts one funding line, and that line's `amount` equals the expense `amount`. `splitMode` is `equal`, `exact`, `percentage`, or `shares`. It is stored on the expense as `split_mode` and echoed on reads.
+Each `fundingLines` entry is one payer. Lines must be unique by `memberId`, each `amount` must be greater than zero, and the lines must sum to the expense `amount`. `splitMode` is `equal`, `exact`, `percentage`, or `shares`. It is stored on the expense as `split_mode` and echoed on reads.
 
 Every mode uses the same `split` array: `{ "memberId", "amount" }[]`. Each `amount` is an integer in paise. The client calculates the shares. The server stores them and checks that they sum to the expense `amount`. A mismatch is `422 SPLIT_REFUSED` with `details.gap` set to the difference in paise.
 
 The Add expense frame shows Equally, Exact, Shares, and %. Percent inputs must sum to 100% before save. `categoryId` and `occurredOn` stay required.
 
-`fundingLines` is an array so a later second payer is another line, not a new route. `accountId` stays off the JSON until accounts exist.
+`accountId` stays off funding JSON until accounts exist. A mismatch on funding sum is `422 VALIDATION_FAILED` with `details.field` set to `fundingLines`.
 
 ### GET /groups/:groupId/expenses/:expenseId
 

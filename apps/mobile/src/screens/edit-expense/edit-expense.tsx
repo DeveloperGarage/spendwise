@@ -19,7 +19,12 @@ import { useGoBack } from '@/hooks/use-go-back';
 import { ApiError } from '@/lib/api/clients';
 import { getCategoriesForGroup } from '@/lib/api/categories';
 import { getExpenseById, updateExpense } from '@/lib/api/expense';
-import { splitInitialFromDetail } from '@/lib/expense-prefill';
+import { fundingInitialFromDetail, splitInitialFromDetail } from '@/lib/expense-prefill';
+import {
+  ExpenseFundingEditor,
+  ExpenseFundingInitial,
+  FundingValue,
+} from '@/components/expense-funding-editor';
 import { getMembersForGroup } from '@/lib/api/members';
 import { groupIndian } from '@/lib/money';
 import { useMe } from '@/lib/session';
@@ -43,11 +48,12 @@ export function EditExpenseScreen() {
   const [groupMembers, setGroupMembers] = useState<Member[]>([]);
   const [groupCategories, setGroupCategories] = useState<Category[]>([]);
   const [splitInitial, setSplitInitial] = useState<ExpenseSplitInitial | undefined>();
+  const [fundingInitial, setFundingInitial] = useState<ExpenseFundingInitial | undefined>();
+  const [funding, setFunding] = useState<FundingValue>({ fundingLines: [], inputsValid: false });
 
   const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState('');
   const [occurredOn, setOccurredOn] = useState('');
-  const [paidBy, setPaidBy] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [split, setSplit] = useState<SplitValue>({ splitMode: 'equal', split: [], inputsValid: false });
 
@@ -62,11 +68,6 @@ export function EditExpenseScreen() {
     [groupCategories],
   );
 
-  const payeeOptions = useMemo(
-    () => roster.map((member) => ({ id: member.id, label: member.displayName })),
-    [roster],
-  );
-
   const splitTotal = useMemo(
     () => split.split.reduce((sum, line) => sum + line.amount, 0),
     [split],
@@ -78,6 +79,7 @@ export function EditExpenseScreen() {
     !!expenseId &&
     !!categoryId &&
     amount > 0 &&
+    funding.inputsValid &&
     split.inputsValid &&
     split.split.length > 0 &&
     splitTotal === amount;
@@ -89,8 +91,7 @@ export function EditExpenseScreen() {
     setDescription(detail.note);
     setOccurredOn(detail.occurredOn);
     setCategoryId(detail.categoryId);
-    const payer = detail.fundingLines[0]?.memberId ?? '';
-    setPaidBy(payer);
+    setFundingInitial(fundingInitialFromDetail(detail.fundingLines));
     setSplitInitial(splitInitialFromDetail(detail, members.map((member) => member.id)));
   };
 
@@ -139,7 +140,7 @@ export function EditExpenseScreen() {
     note: description,
     occurredOn,
     categoryId,
-    fundingLines: [{ memberId: paidBy, amount }],
+    fundingLines: funding.fundingLines,
     splitMode: split.splitMode,
     split: split.split,
   });
@@ -260,11 +261,12 @@ export function EditExpenseScreen() {
           </View>
 
           <View style={styles.fieldBlock}>
-            <Dropdown
-              label="Paid by"
-              options={payeeOptions}
-              selectedId={paidBy}
-              onSelect={voided ? () => {} : setPaidBy}
+            <ExpenseFundingEditor
+              members={roster}
+              total={amount}
+              initial={fundingInitial}
+              readOnly={voided}
+              onChange={setFunding}
             />
           </View>
 

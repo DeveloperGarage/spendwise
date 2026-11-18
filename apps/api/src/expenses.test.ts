@@ -137,6 +137,119 @@ describe("expenses", { skip: !hasPostgres }, () => {
     }
   });
 
+  it("creates an expense with two payers and lists payers on the group feed", async () => {
+    const { db, sql } = createDb(DATABASE_URL);
+    const emailA = `a.${randomUUID()}@gmail.com`;
+    const emailB = `b.${randomUUID()}@gmail.com`;
+    const emailC = `c.${randomUUID()}@gmail.com`;
+    const idB = `u_${randomUUID()}`;
+    try {
+      await migrateJournal();
+      await db.insert(allowedEmails).values([{ email: emailA }, { email: emailB }, { email: emailC }]);
+      await db.insert(users).values([
+        { id: idB, email: emailB, displayName: "B", profileCompletedAt: new Date() },
+      ]);
+
+      const app = createApp(db, {
+        cookieSecure: false,
+        exchangeGoogle: async () => ({ email: emailA, displayName: "A" }),
+      });
+
+      const login = await app.request("/auth/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: "google", idToken: "fake" }),
+      });
+      const cookie = cookieHeader(login);
+
+      const created = await app.request("/groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie },
+        body: JSON.stringify({ name: "Trip", memberEmails: [emailB, emailC] }),
+      });
+      const group = (await created.json()) as { id: string; members: { id: string }[] };
+      const [me] = await db.select().from(users).where(eq(users.email, emailA));
+      assert.ok(me);
+      const memberIds = group.members.map((m) => m.id);
+      const payerB = memberIds.find((id) => id === idB);
+      assert.ok(payerB);
+      const [foodCat] = await db
+        .select()
+        .from(categories)
+        .where(eq(categories.groupId, group.id));
+      assert.ok(foodCat);
+
+      const perPerson = Math.floor(120000 / memberIds.length);
+      const remainder = 120000 - perPerson * memberIds.length;
+      const split = memberIds.map((id, index) => ({
+        memberId: id,
+        amount: perPerson + (index < remainder ? 1 : 0),
+      }));
+
+      const body = {
+        note: "Cab",
+        occurredOn: "2026-11-08",
+        categoryId: foodCat.id,
+        amount: 120000,
+        splitMode: "equal",
+        split,
+        fundingLines: [
+          { memberId: me.id, amount: 80000 },
+          { memberId: payerB, amount: 40000 },
+        ],
+      };
+
+      const post = await app.request(`/groups/${group.id}/expenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          cookie,
+          "Idempotency-Key": "k-multi",
+        },
+        body: JSON.stringify(body),
+      });
+      assert.equal(post.status, 201);
+      const expense = (await post.json()) as {
+        id: string;
+        payers: { id: string; amount: number }[];
+        caller: { paid: number; effect: string };
+      };
+      assert.equal(expense.payers.length, 2);
+      assert.equal(expense.caller.paid, 80000);
+      assert.equal(expense.caller.effect, "lent");
+
+      const list = await app.request(`/groups/${group.id}/expenses`, { headers: { cookie } });
+      const listed = (await list.json()) as {
+        expenses: { id: string; payers: { id: string; amount: number }[] }[];
+      };
+      assert.equal(listed.expenses[0]?.payers.length, 2);
+      const amounts = listed.expenses[0]!.payers.map((p) => p.amount).sort((a, b) => a - b);
+      assert.deepEqual(amounts, [40000, 80000]);
+
+      const badFunding = await app.request(`/groups/${group.id}/expenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          cookie,
+          "Idempotency-Key": "k-bad-funding",
+        },
+        body: JSON.stringify({
+          ...body,
+          note: "Bad funding",
+          fundingLines: [
+            { memberId: me.id, amount: 50000 },
+            { memberId: payerB, amount: 40000 },
+          ],
+        }),
+      });
+      assert.equal(badFunding.status, 422);
+      const err = (await badFunding.json()) as { error: { details: { field: string } } };
+      assert.equal(err.error.details.field, "fundingLines");
+    } finally {
+      await sql.end({ timeout: 5 });
+    }
+  });
+
   it("refuses exact split that does not add up", async () => {
     const { db, sql } = createDb(DATABASE_URL);
     const email = `solo.${randomUUID()}@gmail.com`;

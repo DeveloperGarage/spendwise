@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useTheme } from '@/hooks/use-theme';
 import { formatPaise } from '@/lib/money';
+import { formatPayersLine } from '@/lib/format-payers';
 import { Expense } from '@/domain/models/expense';
 import { createStyles } from './expense-list.styles';
 
@@ -45,7 +46,7 @@ export function ExpenseList({ expenses, onOpenExpense }: ExpenseListProps) {
               <Text style={styles.subtitle}>
                 {[
                   expense.category?.name,
-                  `${expense.payer?.displayName ?? 'Someone'} paid ${formatPaise(expense.amount)}`,
+                  formatPayersLine(expense.payers ?? [], expense.amount),
                 ]
                   .filter(Boolean)
                   .join(' · ')}
