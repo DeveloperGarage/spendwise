@@ -143,11 +143,13 @@ describe("expenses", { skip: !hasPostgres }, () => {
     const emailB = `b.${randomUUID()}@gmail.com`;
     const emailC = `c.${randomUUID()}@gmail.com`;
     const idB = `u_${randomUUID()}`;
+    const idC = `u_${randomUUID()}`;
     try {
       await migrateJournal();
       await db.insert(allowedEmails).values([{ email: emailA }, { email: emailB }, { email: emailC }]);
       await db.insert(users).values([
         { id: idB, email: emailB, displayName: "B", profileCompletedAt: new Date() },
+        { id: idC, email: emailC, displayName: "C", profileCompletedAt: new Date() },
       ]);
 
       const app = createApp(db, {
@@ -167,6 +169,7 @@ describe("expenses", { skip: !hasPostgres }, () => {
         headers: { "Content-Type": "application/json", cookie },
         body: JSON.stringify({ name: "Trip", memberEmails: [emailB, emailC] }),
       });
+      assert.equal(created.status, 201);
       const group = (await created.json()) as { id: string; members: { id: string }[] };
       const [me] = await db.select().from(users).where(eq(users.email, emailA));
       assert.ok(me);
