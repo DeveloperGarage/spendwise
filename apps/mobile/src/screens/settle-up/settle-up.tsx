@@ -7,7 +7,6 @@ import { DateField, todayIsoDate } from '@/components/date-field';
 import { Dropdown } from '@/components/dropdown';
 import { TextButton } from '@/components/text-button';
 import { PageHeader, SafeArea, ScreenContainer, TextField } from '@/custom-elements';
-import { SettleSuggestion } from '@/domain/models/balances';
 import { PostSettlement } from '@/domain/models/settlement';
 import { useTheme } from '@/hooks/use-theme';
 import { useGoBack } from '@/hooks/use-go-back';
@@ -16,6 +15,7 @@ import { getBalancesForGroup } from '@/lib/api/groups';
 import { getMembersForGroup } from '@/lib/api/members';
 import { saveSettlement } from '@/lib/api/settlement';
 import { groupIndian } from '@/lib/money';
+import { suggestionsInvolving } from '@/lib/suggestions';
 import { useMe } from '@/lib/session';
 import { createStyles } from './settle-up.styles';
 
@@ -68,11 +68,9 @@ export function SettleUpScreen() {
           })),
         );
 
-        const suggestion: SettleSuggestion | undefined = balances.suggestion[0];
-        const from =
-          params.fromMemberId ?? suggestion?.fromMemberId ?? balances.members.find((m) => m.balance < 0)?.id ?? '';
-        const to =
-          params.toMemberId ?? suggestion?.toMemberId ?? balances.members.find((m) => m.balance > 0)?.id ?? '';
+        const suggestion = suggestionsInvolving(balances.suggestion, me?.id)[0];
+        const from = params.fromMemberId ?? suggestion?.fromMemberId ?? '';
+        const to = params.toMemberId ?? suggestion?.toMemberId ?? '';
 
         const paiseRaw = params.amountPaise
           ? Number.parseInt(params.amountPaise, 10)

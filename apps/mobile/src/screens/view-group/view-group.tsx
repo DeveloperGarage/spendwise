@@ -23,6 +23,7 @@ import { getSummaryForGroup } from '@/lib/api/categories';
 import { GroupSummary } from '@/domain/models/summary';
 import { getBalancesForGroup, getExpensesForGroup, getGroupById } from '@/lib/api/groups';
 import { formatPaise } from '@/lib/money';
+import { suggestionsInvolving } from '@/lib/suggestions';
 import { useMe } from '@/lib/session';
 import { useGoBack } from '@/hooks/use-go-back';
 
@@ -174,6 +175,7 @@ export function ViewGroupScreen() {
   const name = group?.name ?? 'Group';
   const balance = group?.balance ?? 0;
   const owed = balance >= 0;
+  const mySuggestion = suggestionsInvolving(balances?.suggestion ?? [], me?.id)[0];
 
   return (
     <SafeArea>
@@ -214,7 +216,7 @@ export function ViewGroupScreen() {
               </Text>
             </View>
             <Pressable
-              onPress={() => openSettleUp(balances?.suggestion[0])}
+              onPress={() => openSettleUp(mySuggestion)}
               accessibilityRole="button"
               style={({ pressed }) => [styles.settleButton, pressed && styles.pressed]}>
               <Text style={styles.settleButtonText}>Settle up</Text>

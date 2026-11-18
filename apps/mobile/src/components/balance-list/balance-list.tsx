@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { GroupBalances } from '@/domain/models/balances';
 import { useTheme } from '@/hooks/use-theme';
 import { formatPaise } from '@/lib/money';
+import { suggestionsInvolving } from '@/lib/suggestions';
 import { createStyles } from './balance-list.styles';
 
 type BalanceListProps = Readonly<{
@@ -49,6 +50,7 @@ export function BalanceList({
   const nameById = new Map(
     balances.members.map((member) => [member.id, member.displayName]),
   );
+  const mySuggestions = suggestionsInvolving(balances.suggestion, currentUserId);
   const allSettled = balances.members.every((member) => member.balance === 0);
 
   if (allSettled && balances.suggestion.length === 0) {
@@ -78,11 +80,11 @@ export function BalanceList({
         })}
       </View>
 
-      {balances.suggestion.length > 0 && (
+      {mySuggestions.length > 0 && (
         <>
           <Text style={styles.suggestionHeading}>Suggested payments</Text>
           <View style={styles.suggestionList}>
-            {balances.suggestion.map((row, index) => {
+            {mySuggestions.map((row, index) => {
               const from = nameById.get(row.fromMemberId) ?? 'Someone';
               const to = nameById.get(row.toMemberId) ?? 'Someone';
               const content = (
