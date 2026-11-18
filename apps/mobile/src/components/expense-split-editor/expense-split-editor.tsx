@@ -9,6 +9,14 @@ import {Member} from "@/domain/models/members";
 import {SplitMode, SplitValue} from "@/domain/models/expense";
 import {createStyles} from "./expense-split-editor.styles";
 
+export type ExpenseSplitInitial = {
+  mode: SplitMode;
+  selected: Record<string, boolean>;
+  exactInput?: Record<string, number>;
+  percentInput?: Record<string, number>;
+  sharesInput?: Record<string, number>;
+};
+
 type ExpenseSplitEditorProps = {
   /** The roster the expense can be split across (group members, or just you). */
   members: Member[];
@@ -16,6 +24,10 @@ type ExpenseSplitEditorProps = {
   total: number;
   /** Emits the resolved split (chosen mode + per-participant amounts). */
   onChange: (value: SplitValue) => void;
+  /** When set (e.g. edit expense), seeds mode and per-member inputs once. */
+  initial?: ExpenseSplitInitial;
+  /** Voided expenses: show values but block interaction. */
+  readOnly?: boolean;
 };
 
 const SPLIT_MODES: { key: SplitMode; label: string }[] = [
@@ -31,7 +43,7 @@ const SPLIT_MODES: { key: SplitMode; label: string }[] = [
  * participant's input) and publishes only the resolved result upward via
  * `onChange`. The parent supplies the roster + total and stores the result.
  */
-export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEditorProps) {
+export function ExpenseSplitEditor({members, total, onChange, initial, readOnly}: ExpenseSplitEditorProps) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
@@ -41,6 +53,20 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
   const [sharesInput, setSharesInput] = useState<Record<string, number>>({});
   const [percentInput, setPercentInput] = useState<Record<string, number>>({});
   const [percentTouched, setPercentTouched] = useState(false);
+  const initialKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initial) return;
+    const key = `${initial.mode}:${JSON.stringify(initial.selected)}`;
+    if (initialKeyRef.current === key) return;
+    initialKeyRef.current = key;
+    setMode(initial.mode);
+    setSelected(initial.selected);
+    if (initial.exactInput) setExactInput(initial.exactInput);
+    if (initial.percentInput) setPercentInput(initial.percentInput);
+    if (initial.sharesInput) setSharesInput(initial.sharesInput);
+    setPercentTouched(false);
+  }, [initial]);
 
   const isSelected = (memberId: string) => selected[memberId] ?? true;
 
@@ -125,6 +151,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
           <Text style={styles.editAffix}>₹</Text>
           <TextInput
             style={styles.editInput}
+            editable={!readOnly}
             value={exactInput[member.id] ? String(exactInput[member.id] / 100) : ''}
             onChangeText={(text) => setMemberInput(setExactInput, member.id, text, 100)}
             keyboardType="number-pad"
@@ -141,6 +168,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
         <View style={styles.editWrap}>
           <TextInput
             style={styles.editInput}
+            editable={!readOnly}
             value={sharesInput[member.id] ? String(sharesInput[member.id]) : ''}
             onChangeText={(text) => setMemberInput(setSharesInput, member.id, text)}
             keyboardType="number-pad"
@@ -159,6 +187,7 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
         <View style={styles.editWrap}>
           <TextInput
             style={styles.editInput}
+            editable={!readOnly}
             value={percentInput[member.id] ? String(percentInput[member.id]) : ''}
             onChangeText={(text) => {
               setPercentTouched(true);
@@ -194,7 +223,8 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
           return (
             <Pressable
               key={item.key}
-              onPress={() => setMode(item.key)}
+              onPress={() => !readOnly && setMode(item.key)}
+              disabled={readOnly}
               accessibilityRole="button"
               accessibilityState={{selected: active}}
               style={[styles.segment, active && styles.segmentActive]}>
@@ -214,7 +244,8 @@ export function ExpenseSplitEditor({members, total, onChange}: ExpenseSplitEdito
               key={member.id}
               style={[styles.memberRow, index > 0 && styles.memberRowDivider]}>
               <Pressable
-                onPress={() => toggleMember(member.id)}
+                onPress={() => !readOnly && toggleMember(member.id)}
+                disabled={readOnly}
                 accessibilityRole="checkbox"
                 accessibilityState={{checked}}
                 style={({pressed}) => [styles.memberToggle, pressed && styles.pressed]}>

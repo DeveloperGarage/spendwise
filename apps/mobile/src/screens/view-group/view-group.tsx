@@ -56,6 +56,11 @@ export function ViewGroupScreen() {
 
   const onAddExpense = () => router.push({ pathname: '/add-expense', params: { groupId: id } });
 
+  const onOpenExpense = (expenseId: string) => {
+    if (!id) return;
+    router.push({ pathname: '/edit-expense', params: { groupId: id, expenseId } });
+  };
+
   const openSettleUp = (suggestion?: GroupBalances['suggestion'][number]) => {
     if (!id) return;
     router.push({
@@ -232,7 +237,7 @@ export function ViewGroupScreen() {
             })}
           </View>
 
-          {tab === 'expenses' && <ExpenseList expenses={expenses} />}
+          {tab === 'expenses' && <ExpenseList expenses={expenses} onOpenExpense={onOpenExpense} />}
           {tab === 'balances' && (
             <BalanceList
               balances={balances}

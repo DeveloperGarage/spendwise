@@ -36,7 +36,30 @@ const expensesTemplate = {
 export const expensesFactory = (overrides: any = {}): any =>
   ({expenses: expensesTemplate.expenses.map((expense) => ({groupId: 'mock-group-1', ...expense, ...overrides})),
   nextCursor: expensesTemplate.nextCursor
-})
+});
+
+export const expenseDetailFactory = (overrides: Partial<{
+  id: string;
+  version: number;
+  voided: boolean;
+  amount: number;
+}> = {}) => ({
+  id: 'e_1',
+  version: 1,
+  voided: false,
+  note: "Dinner at Britto's",
+  occurredOn: '2026-11-07',
+  categoryId: 'c_food',
+  amount: 120000,
+  splitMode: 'equal' as const,
+  split: [
+    { memberId: 'mock-user-1', amount: 40000 },
+    { memberId: 'mock-user-2', amount: 40000 },
+    { memberId: 'mock-user-3', amount: 40000 },
+  ],
+  fundingLines: [{ memberId: 'mock-user-1', amount: 120000 }],
+  ...overrides,
+});
 
 const membersTemplate =
   { id: 'm1', displayName: 'You', email: 'you@example.com' }

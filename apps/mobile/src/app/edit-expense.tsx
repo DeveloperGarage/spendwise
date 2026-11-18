@@ -1,0 +1,1 @@
+export { EditExpenseScreen as default } from '@/screens/edit-expense/edit-expense';

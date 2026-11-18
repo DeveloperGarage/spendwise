@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import {Me, request} from '@/lib/api/clients';
 import {
   categoriesFactory,
+  expenseDetailFactory,
   expensesFactory,
   groupsFactory,
   membersFactory,
@@ -78,6 +79,22 @@ export const handlers = [
   http.get(`${API_URL}/groups/:groupId/expenses`, ({ params }) => {
     const groupId = Array.isArray(params.groupId) ? params.groupId[0] : params.groupId;
     return HttpResponse.json(expensesFactory({ groupId }));
+  }),
+
+  http.get(`${API_URL}/groups/:groupId/expenses/:expenseId`, ({ params }) => {
+    const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
+    return HttpResponse.json(expenseDetailFactory({ id: expenseId ?? 'e_1' }));
+  }),
+
+  http.put(`${API_URL}/groups/:groupId/expenses/:expenseId`, async ({ request, params }) => {
+    const expenseId = Array.isArray(params.expenseId) ? params.expenseId[0] : params.expenseId;
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json(
+      expenseDetailFactory({
+        id: expenseId ?? 'e_1',
+        version: typeof body.version === 'number' ? body.version + 1 : 2,
+      }),
+    );
   }),
 
   http.get(`${API_URL}/groups/:groupId/members`, ({ params }) => {

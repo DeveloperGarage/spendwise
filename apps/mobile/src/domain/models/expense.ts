@@ -23,6 +23,16 @@ export type PostExpense = {
   fundingLines: FundingLine[]
 };
 
+export type PutExpense = PostExpense & {
+  version: number;
+};
+
+/** GET /groups/:groupId/expenses/:expenseId — edit form payload. */
+export type ExpenseDetail = PutExpense & {
+  id: string;
+  voided: boolean;
+};
+
 /** The resolved output of the split editor: the chosen mode + per-participant amounts. */
 export type SplitValue = {
   splitMode: SplitMode;
